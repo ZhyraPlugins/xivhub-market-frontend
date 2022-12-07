@@ -5,7 +5,10 @@ const config = {
 	plugins: [sveltekit()],
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}']
-	}
+	},
+	ssr: {
+        noExternal: ['@popperjs/core']
+    }
 };
 
 export default config;
