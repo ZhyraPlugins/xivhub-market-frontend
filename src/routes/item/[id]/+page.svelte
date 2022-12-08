@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { hubApi, xivApi, type Listing, type Purchase } from '$lib/api';
 	import { numberWithCommas } from '$lib/util';
+	import { get } from 'svelte/store';
 	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Row, Spinner, TabContent, Table, TabPane } from 'sveltestrap';
 	import type { PageData } from './$types';
 
@@ -8,6 +9,9 @@
 	// Map -> datacenter -> world -> listings
 	export const listingsServers: Map<number, Map<string, Listing[]>> = new Map();
 	export const purchasesServers: Map<number, Map<string, Purchase[]>> = new Map();
+
+	export const cheapestNQListingPerDatacenter: Map<number, Listing> = new Map();
+	export const cheapestHQListingPerDatacenter: Map<number, Listing> = new Map();
 
 	let globalhqPurchases = data.purchases.filter((x) => x.hq);
 	export const globalAverageHqPrice = Math.round(
@@ -26,6 +30,30 @@
 		if (!worlds) {
 			worlds = new Map();
 			listingsServers.set(world.datacenter, worlds);
+		}
+
+		if (listing.hq) {
+			if (!cheapestHQListingPerDatacenter.has(world.datacenter)) {
+				cheapestHQListingPerDatacenter.set(world.datacenter, listing);
+			} else {
+				let current_cheapest = cheapestHQListingPerDatacenter.get(world.datacenter)!;
+
+				if (current_cheapest.price_per_unit < listing.price_per_unit) {
+					cheapestHQListingPerDatacenter.set(world.datacenter, listing);
+				}
+			}
+		}
+
+		if (!listing.hq) {
+			if (!cheapestNQListingPerDatacenter.has(world.datacenter)) {
+				cheapestNQListingPerDatacenter.set(world.datacenter, listing);
+			} else {
+				let current_cheapest = cheapestNQListingPerDatacenter.get(world.datacenter)!;
+
+				if (current_cheapest.price_per_unit < listing.price_per_unit) {
+					cheapestNQListingPerDatacenter.set(world.datacenter, listing);
+				}
+			}
 		}
 
 		let listings = worlds.get(world.name);
@@ -149,11 +177,11 @@
 								}}
 							>
 								{#each Array.from(listingsServers.entries()) as [datacenter, worlds], i}
+									{@const dataCenterName = datacenterNames[datacenter] ?? datacenter}
 									<TabPane id={`datacenter-${i}`} tabId={i} active={datacenterTab == i} class="w-100">
 										<span slot="tab">
-											{datacenterNames[datacenter] ?? datacenter}
+											{dataCenterName}
 										</span>
-
 										<TabContent
 											on:tab={(e) => {
 												worldTab = e.detail;
@@ -166,6 +194,20 @@
 													<span slot="tab">
 														{world_name}
 													</span>
+													{#if cheapestHQListingPerDatacenter.has(datacenter)}
+														{@const cheapest = cheapestHQListingPerDatacenter.get(datacenter)}
+														<p class="mb-0">
+															Cheapest HQ on <b>{dataCenterName}</b> at
+															<b>{xivApi.getServer(cheapest?.world_id).name}</b> for <b>{numberWithCommas(cheapest?.price_per_unit)}</b>
+														</p>
+													{/if}
+													{#if cheapestNQListingPerDatacenter.has(datacenter)}
+														{@const cheapest = cheapestNQListingPerDatacenter.get(datacenter)}
+														<p class="mt-0">
+															Cheapest NQ on <b>{dataCenterName}</b> at
+															<b>{xivApi.getServer(cheapest?.world_id).name}</b> for <b>{numberWithCommas(cheapest?.price_per_unit)}</b>
+														</p>
+													{/if}
 
 													<h4 class="mt-2">HQ Listings</h4>
 													<Table hover responsive class="mt-2">
