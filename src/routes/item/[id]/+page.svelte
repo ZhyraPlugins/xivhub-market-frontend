@@ -20,6 +20,14 @@
 	// Map -> datacenter -> world -> listings
 	export const listingsServers: Map<number, Map<string, Listing[]>> = new Map();
 	export const purchasesServers: Map<number, Map<string, Purchase[]>> = new Map();
+	export const globalAverageHqPrice = data.purchases
+		.filter((x) => x.hq)
+		.map((x) => x.price_per_unit)
+		.reduce((a, b) => a + b);
+	export const globalAverageNqPrice = data.purchases
+		.filter((x) => !x.hq)
+		.map((x) => x.price_per_unit)
+		.reduce((a, b) => a + b);
 
 	// Put the listings inside each datacenter, world
 	for (let listing of data.listings) {
@@ -116,7 +124,11 @@
 										<img class="mt-2" src={xivApi.apiBase(itemData.ItemSearchCategory.IconHD)} />
 									</Col>
 									<Col>
-										<p><b>Item Kind</b>: <span>{itemData.ItemKind.Name}</span></p>
+										<ul>
+											<li><b>Item Kind</b>: {itemData.ItemKind.Name}</li>
+											<li><b>Global Average HQ price</b>: {globalAverageHqPrice}</li>
+											<li><b>Global Average NQ price</b>: {globalAverageNqPrice}</li>
+										</ul>
 										<p style="white-space: pre-line">
 											{itemData.Description.replace(/[\n]+/g, '\n')}
 										</p>
@@ -246,10 +258,23 @@
 											}}
 										>
 											{#each Array.from(worlds.entries()) as [world_name, listings], ii}
+												{@const averageNqPriceUnit = listings
+													.filter((x) => !x.hq)
+													.map((x) => x.price_per_unit)
+													.reduce((a, b) => a + b)}
+												{@const averageHqPriceUnit = listings
+													.filter((x) => x.hq)
+													.map((x) => x.price_per_unit)
+													.reduce((a, b) => a + b)}
 												<TabPane id={`world-${i}-${ii}`} tabId={ii} active={worldTab == ii}>
 													<span slot="tab">
 														{world_name}
 													</span>
+
+													<ul class="mt-2">
+														<li>Average NQ Price: {averageNqPriceUnit}</li>
+														<li>Average HQ Price: {averageHqPriceUnit}</li>
+													</ul>
 
 													<Table hover responsive class="mt-2">
 														<thead>
