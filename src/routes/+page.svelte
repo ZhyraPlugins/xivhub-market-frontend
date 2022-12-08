@@ -38,14 +38,6 @@
 </script>
 
 <Container>
-	<Alert color="warning">
-		<h4 class="alert-heading text-capitalize">Work in progress</h4>
-		<span>
-			The site is currently in live development. You can join our <a
-				href="https://discord.gg/GZK9aME8wN">discord</a
-			>!
-		</span>
-	</Alert>
 	<Row class="gap-2">
 		<Col>
 			<StatCard title="Uploads" data={data.stats.total_uploads} />
