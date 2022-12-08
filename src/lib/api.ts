@@ -1,10 +1,7 @@
 import { PUBLIC_MARKET_API } from '$env/static/public';
 //import { PUBLIC_XIVAPI_KEY } from '$env/static/public';
 import Servers from '../servers.json';
-import { writable } from 'svelte/store';
-
-// todo cache this
-export const cachedItemData = writable(new Map<number, XivApiItem>());
+import { db, type CachedItem } from './db';
 
 export interface Upload {
 	id: string;
@@ -15,7 +12,7 @@ export interface Upload {
 	upload_type: number;
 }
 
-export interface Item {
+export interface Listing {
 	listing_id: number;
 	upload_id: string;
 	world_id: number;
@@ -53,30 +50,32 @@ export interface Stats {
 	unique_items: number;
 }
 
+type Fetch = (input: RequestInfo | URL, init?: RequestInit | undefined) => Promise<Response>;
+
 export class HubApi {
 	getUrl(path: string) {
 		return `${PUBLIC_MARKET_API}${path}`;
 	}
 
-	async last_uploads(): Promise<Upload[]> {
+	async last_uploads(fetch: Fetch): Promise<Upload[]> {
 		const res = await fetch(this.getUrl(`/last_uploads`));
 
 		return await res.json();
 	}
 
-	async listings(item_id: number): Promise<Item[]> {
+	async listings(fetch: Fetch, item_id: number): Promise<Listing[]> {
 		const res = await fetch(this.getUrl(`/item/${item_id}`));
 
 		return await res.json();
 	}
 
-	async purchases(item_id: number, page?: number): Promise<Purchase[]> {
+	async purchases(fetch: Fetch, item_id: number, page?: number): Promise<Purchase[]> {
 		const res = await fetch(this.getUrl(`/item/${item_id}/purchases?page=${page ?? 0}`));
 
 		return await res.json();
 	}
 
-	async stats(): Promise<Stats> {
+	async stats(fetch: Fetch): Promise<Stats> {
 		const res = await fetch(this.getUrl(`/stats`));
 
 		return await res.json();
@@ -91,22 +90,27 @@ export interface XivApiItem {
 	Name: string;
 }
 
-// https://chasingcode.dev/blog/svelte-persist-state-to-localstorage/
 export class XivApi {
-	private last_request: number;
-
-	constructor() {
-		this.last_request = 0;
-	}
-
 	apiBase(path: string) {
 		return `https://xivapi.com${path}`;
 	}
 
-	async getItem(item_id: number): Promise<XivApiItem> {
-		const res = await fetch(this.apiBase(`/item/${item_id}?columns=Name,Icon,IconHD`));
+	async getItem(fetch: Fetch, item_id: number): Promise<CachedItem> {
+		const item = await db.items.get(item_id);
 
-		return await res.json();
+		if (item !== undefined) {
+			return item;
+		} else {
+			const res = await fetch(this.apiBase(`/item/${item_id}?columns=Name,Icon,IconHD`));
+			const resItem: XivApiItem = await res.json();
+
+			const item = {
+				Id: item_id,
+				...resItem
+			};
+			await db.items.add(item);
+			return item;
+		}
 	}
 
 	getServer(world_id: number): { name: string; datacenter: number } {

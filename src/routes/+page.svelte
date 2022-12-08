@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { cachedItemData, hubApi, xivApi, type XivApiItem } from '$lib/api';
+	import { hubApi, xivApi, type XivApiItem } from '$lib/api';
 	import StatCard from '$lib/components/StatCard.svelte';
+	import type { CachedItem } from '$lib/db';
 	import {
 		Alert,
 		Card,
@@ -15,18 +16,13 @@
 	} from 'sveltestrap';
 	import type { PageData } from './$types';
 
-	export let itemData: Map<number, XivApiItem>;
-
-	cachedItemData.subscribe((value) => {
-		itemData = value;
-	});
-
+	export let itemData: Map<number, CachedItem> = new Map();
 	export let data: PageData;
 
 	async function getItemData() {
 		for (var item of data.last_uploads) {
 			if (!itemData.has(item.item_id)) {
-				const res = await xivApi.getItem(item.item_id);
+				const res = await xivApi.getItem(fetch, item.item_id);
 				itemData.set(item.item_id, res);
 			}
 		}
@@ -78,10 +74,14 @@
 									<td
 										><img
 											alt={`${upload.item_id} Icon`}
-											src={`https://xivapi.com${item.Icon}`}
+											src={`https://xivapi.com${item?.Icon}`}
 										/></td
 									>
-									<td>{item.Name}</td>
+									<td
+										><a class="text-decoration-none fw-bold " href={`/item/${item?.Id}`}
+											>{item?.Name}</a
+										></td
+									>
 								{:catch error}
 									<td>{upload.item_id}</td>
 									<td>{upload.item_id}</td>
