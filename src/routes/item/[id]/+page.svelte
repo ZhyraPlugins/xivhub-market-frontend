@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { hubApi, xivApi, type Listing, type Purchase } from '$lib/api';
+	import { numberWithCommas } from '$lib/util';
 	import {
 		Card,
 		CardBody,
@@ -126,8 +127,12 @@
 									<Col>
 										<ul>
 											<li><b>Item Kind</b>: {itemData.ItemKind.Name}</li>
-											<li><b>Global Average HQ price</b>: {globalAverageHqPrice}</li>
-											<li><b>Global Average NQ price</b>: {globalAverageNqPrice}</li>
+											<li>
+												<b>Global Average HQ price</b>: {numberWithCommas(globalAverageHqPrice)}
+											</li>
+											<li>
+												<b>Global Average NQ price</b>: {numberWithCommas(globalAverageNqPrice)}
+											</li>
 										</ul>
 										<p style="white-space: pre-line">
 											{itemData.Description.replace(/[\n]+/g, '\n')}
@@ -190,9 +195,13 @@
 														<tbody>
 															{#each hqListings as listing}
 																<tr>
-																	<td>{listing.price_per_unit}</td>
+																	<td>{numberWithCommas(listing.price_per_unit)}</td>
 																	<td>{listing.quantity}</td>
-																	<td>{listing.quantity * listing.price_per_unit}</td>
+																	<td
+																		>{numberWithCommas(
+																			listing.quantity * listing.price_per_unit
+																		)}</td
+																	>
 																	<td>{new Date(listing.last_review_time).toLocaleString()}</td>
 																</tr>
 															{/each}
@@ -210,9 +219,13 @@
 														<tbody>
 															{#each nqListings as listing}
 																<tr>
-																	<td>{listing.price_per_unit}</td>
+																	<td>{numberWithCommas(listing.price_per_unit)}</td>
 																	<td>{listing.quantity}</td>
-																	<td>{listing.quantity * listing.price_per_unit}</td>
+																	<td
+																		>{numberWithCommas(
+																			listing.quantity * listing.price_per_unit
+																		)}</td
+																	>
 																	<td>{new Date(listing.last_review_time).toLocaleString()}</td>
 																</tr>
 															{/each}
@@ -272,8 +285,8 @@
 													</span>
 
 													<ul class="mt-2">
-														<li>Average NQ Price: {averageNqPriceUnit}</li>
-														<li>Average HQ Price: {averageHqPriceUnit}</li>
+														<li>Average HQ Price: {numberWithCommas(averageHqPriceUnit)}</li>
+														<li>Average NQ Price: {numberWithCommas(averageNqPriceUnit)}</li>
 													</ul>
 
 													<Table hover responsive class="mt-2">
@@ -287,9 +300,13 @@
 														<tbody>
 															{#each listings as listing}
 																<tr>
-																	<td>{listing.price_per_unit}</td>
+																	<td>{numberWithCommas(listing.price_per_unit)}</td>
 																	<td>{listing.quantity}</td>
-																	<td>{listing.quantity * listing.price_per_unit}</td>
+																	<td
+																		>{numberWithCommas(
+																			listing.quantity * listing.price_per_unit
+																		)}</td
+																	>
 																	<td>{listing.hq.toString()}</td>
 																	<td>{new Date(listing.purchase_time).toLocaleString()}</td>
 																</tr>
