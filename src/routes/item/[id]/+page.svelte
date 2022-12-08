@@ -23,11 +23,11 @@
 	export const globalAverageHqPrice = data.purchases
 		.filter((x) => x.hq)
 		.map((x) => x.price_per_unit)
-		.reduce((a, b) => a + b);
+		.reduce((a, b) => a + b, 0);
 	export const globalAverageNqPrice = data.purchases
 		.filter((x) => !x.hq)
 		.map((x) => x.price_per_unit)
-		.reduce((a, b) => a + b);
+		.reduce((a, b) => a + b, 0);
 
 	// Put the listings inside each datacenter, world
 	for (let listing of data.listings) {
@@ -261,11 +261,11 @@
 												{@const averageNqPriceUnit = listings
 													.filter((x) => !x.hq)
 													.map((x) => x.price_per_unit)
-													.reduce((a, b) => a + b)}
+													.reduce((a, b) => a + b), 0}
 												{@const averageHqPriceUnit = listings
 													.filter((x) => x.hq)
 													.map((x) => x.price_per_unit)
-													.reduce((a, b) => a + b)}
+													.reduce((a, b) => a + b, 0)}
 												<TabPane id={`world-${i}-${ii}`} tabId={ii} active={worldTab == ii}>
 													<span slot="tab">
 														{world_name}
