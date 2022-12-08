@@ -160,11 +160,14 @@
 											}}
 										>
 											{#each Array.from(worlds.entries()) as [world_name, listings], ii}
+												{@const hqListings = listings.filter((x) => x.hq)}
+												{@const nqListings = listings.filter((x) => !x.hq)}
 												<TabPane id={`world-${i}-${ii}`} tabId={ii} active={worldTab == ii}>
 													<span slot="tab">
 														{world_name}
 													</span>
 
+													<h4 class="mt-2">HQ Listings</h4>
 													<Table hover responsive class="mt-2">
 														<thead>
 															<th>Price per unit</th>
@@ -173,7 +176,27 @@
 															<th>Last Review</th>
 														</thead>
 														<tbody>
-															{#each listings as listing}
+															{#each hqListings as listing}
+																<tr>
+																	<td>{listing.price_per_unit}</td>
+																	<td>{listing.quantity}</td>
+																	<td>{listing.quantity * listing.price_per_unit}</td>
+																	<td>{new Date(listing.last_review_time).toLocaleString()}</td>
+																</tr>
+															{/each}
+														</tbody>
+													</Table>
+
+													<h4 class="mt-2">NQ Listings</h4>
+													<Table hover responsive class="mt-2">
+														<thead>
+															<th>Price per unit</th>
+															<th>Quantity</th>
+															<th>Total</th>
+															<th>Last Review</th>
+														</thead>
+														<tbody>
+															{#each nqListings as listing}
 																<tr>
 																	<td>{listing.price_per_unit}</td>
 																	<td>{listing.quantity}</td>
@@ -233,6 +256,7 @@
 															<th>Price per unit</th>
 															<th>Quantity</th>
 															<th>Total</th>
+															<th>HQ</th>
 															<th>Purchased At</th>
 														</thead>
 														<tbody>
@@ -241,6 +265,7 @@
 																	<td>{listing.price_per_unit}</td>
 																	<td>{listing.quantity}</td>
 																	<td>{listing.quantity * listing.price_per_unit}</td>
+																	<td>{listing.hq.toString()}</td>
 																	<td>{new Date(listing.purchase_time).toLocaleString()}</td>
 																</tr>
 															{/each}
