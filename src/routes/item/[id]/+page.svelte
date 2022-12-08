@@ -38,7 +38,7 @@
 			} else {
 				let current_cheapest = cheapestHQListingPerDatacenter.get(world.datacenter)!;
 
-				if (current_cheapest.price_per_unit < listing.price_per_unit) {
+				if (current_cheapest.price_per_unit > listing.price_per_unit) {
 					cheapestHQListingPerDatacenter.set(world.datacenter, listing);
 				}
 			}
@@ -50,7 +50,7 @@
 			} else {
 				let current_cheapest = cheapestNQListingPerDatacenter.get(world.datacenter)!;
 
-				if (current_cheapest.price_per_unit < listing.price_per_unit) {
+				if (current_cheapest.price_per_unit > listing.price_per_unit) {
 					cheapestNQListingPerDatacenter.set(world.datacenter, listing);
 				}
 			}
