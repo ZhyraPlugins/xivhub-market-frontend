@@ -261,7 +261,7 @@
 												{@const averageNqPriceUnit = listings
 													.filter((x) => !x.hq)
 													.map((x) => x.price_per_unit)
-													.reduce((a, b) => a + b), 0}
+													.reduce((a, b) => a + b, 0)}
 												{@const averageHqPriceUnit = listings
 													.filter((x) => x.hq)
 													.map((x) => x.price_per_unit)
