@@ -48,7 +48,7 @@
 	</Alert>
 	<Row class="gap-2">
 		<Col>
-			<StatCard title="Uploads" data={data.stats.unique_uploaders} />
+			<StatCard title="Uploads" data={data.stats.total_uploads} />
 		</Col>
 		<Col>
 			<StatCard title="Purchases" data={data.stats.total_purchases} />
