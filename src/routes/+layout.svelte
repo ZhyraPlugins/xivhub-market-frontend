@@ -48,12 +48,16 @@
 <Container>
 	<Alert color="warning">
 		<h4 class="alert-heading text-capitalize">Work in progress</h4>
-		<span>
+		<p>
 			The site is currently in live development. You can join our <a
 				href="https://discord.gg/GZK9aME8wN">discord</a
 			>
 			or follow us on <a href="https://twitter.com/XivHub">twitter</a>!
-		</span>
+		</p>
+		<p class="mb-0">
+			You can help providing data using the dalamud
+			<a href="https://github.com/ZhyraPlugins/MarketUploader"> plugin </a>
+		</p>
 	</Alert>
 </Container>
 
