@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { cachedItemData, hubApi, xivApi, type XivApiItem } from '$lib/api';
+	import StatCard from '$lib/components/StatCard.svelte';
 	import {
 		Alert,
 		Card,
@@ -7,7 +8,9 @@
 		CardHeader,
 		CardText,
 		CardTitle,
+		Col,
 		Container,
+		Row,
 		Table
 	} from 'sveltestrap';
 	import type { PageData } from './$types';
@@ -43,11 +46,28 @@
 			>!
 		</span>
 	</Alert>
-	<Card>
+	<Row class="gap-2">
+		<Col>
+			<StatCard title="Uploads" data={data.stats.unique_uploaders} />
+		</Col>
+		<Col>
+			<StatCard title="Purchases" data={data.stats.total_purchases} />
+		</Col>
+		<Col>
+			<StatCard title="Listings" data={data.stats.active_listings} />
+		</Col>
+		<Col>
+			<StatCard title="Items" data={data.stats.unique_items} />
+		</Col>
+		<Col>
+			<StatCard title="Uploaders" data={data.stats.unique_uploaders} />
+		</Col>
+	</Row>
+	<Card class="mt-3">
 		<CardHeader><CardTitle>Latest Uploads</CardTitle></CardHeader>
 		<CardBody>
 			<CardText>
-				<Table hover>
+				<Table hover responsive>
 					<thead>
 						<th>Image</th>
 						<th>Item</th>
