@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { hubApi, xivApi, type Listing } from '$lib/api';
+	import { hubApi, xivApi, type Listing, type Purchase } from '$lib/api';
 	import {
 		Card,
 		CardBody,
@@ -19,6 +19,7 @@
 	export let data: PageData;
 	// Map -> datacenter -> world -> listings
 	export const listingsServers: Map<number, Map<string, Listing[]>> = new Map();
+	export const purchasesServers: Map<number, Map<string, Purchase[]>> = new Map();
 
 	// Put the listings inside each datacenter, world
 	for (let listing of data.listings) {
@@ -38,6 +39,25 @@
 		}
 
 		listings.push(listing);
+	}
+
+	for (let purchase of data.purchases) {
+		const world = xivApi.getServer(purchase.world_id);
+		let worlds = purchasesServers.get(world.datacenter);
+
+		if (!worlds) {
+			worlds = new Map();
+			purchasesServers.set(world.datacenter, worlds);
+		}
+
+		let purchases = worlds.get(world.name);
+
+		if (!purchases) {
+			purchases = [];
+			worlds.set(world.name, purchases);
+		}
+
+		purchases.push(purchase);
 	}
 
 	async function getItemData() {
@@ -70,7 +90,7 @@
 	{/await}
 </svelte:head>
 
-<Container>
+<Container fluid>
 	{#await itemData}
 		<Card class="mt-3">
 			<CardBody>
@@ -81,20 +101,43 @@
 			</CardBody>
 		</Card>
 	{:then itemData}
-		<Card class="mt-3">
-			<CardHeader><CardTitle>{itemData.Name}</CardTitle></CardHeader>
-			<CardBody>
-				<CardText>
-					<Row>
-						<Col xs={1}>
-							<img alt={`${itemData.Id} Icon`} src={`https://xivapi.com${itemData.IconHD}`} />
-						</Col>
-						<Col>
-							<h2>Listings</h2>
+		<Container>
+			<Row>
+				<Col>
+					<Card class="mt-3">
+						<CardHeader>
+							<CardTitle>{itemData.Name}</CardTitle>
+						</CardHeader>
+						<CardBody>
+							<CardText>
+								<Row>
+									<Col xs={1}>
+										<img alt={`${itemData.Id} Icon`} src={`https://xivapi.com${itemData.IconHD}`} />
+										<img class="mt-2" src={xivApi.apiBase(itemData.ItemSearchCategory.IconHD)} />
+									</Col>
+									<Col>
+										<p><b>Item Kind</b>: <span>{itemData.ItemKind.Name}</span></p>
+										<p style="white-space: pre-line">
+											{itemData.Description.replace(/[\n]+/g, '\n')}
+										</p>
+									</Col>
+								</Row>
+							</CardText>
+						</CardBody>
+					</Card>
+				</Col>
+			</Row>
+		</Container>
+
+		<Row>
+			<Col>
+				<Card class="mt-3">
+					<CardHeader><CardTitle>Listings</CardTitle></CardHeader>
+					<CardBody>
+						<CardText>
 							<TabContent
 								vertical
 								pills
-								class="w-100"
 								on:tab={(e) => {
 									worldTab = 0;
 									datacenterTab = e.detail;
@@ -135,7 +178,7 @@
 																	<td>{listing.price_per_unit}</td>
 																	<td>{listing.quantity}</td>
 																	<td>{listing.quantity * listing.price_per_unit}</td>
-																	<td>{new Date(listing.last_review_time).toUTCString()}</td>
+																	<td>{new Date(listing.last_review_time).toLocaleString()}</td>
 																</tr>
 															{/each}
 														</tbody>
@@ -146,10 +189,73 @@
 									</TabPane>
 								{/each}
 							</TabContent>
-						</Col>
-					</Row>
-				</CardText>
-			</CardBody>
-		</Card>
+						</CardText>
+					</CardBody>
+				</Card>
+			</Col>
+			<Col>
+				<Card class="mt-3">
+					<CardHeader><CardTitle>Purchases</CardTitle></CardHeader>
+					<CardBody>
+						<CardText>
+							<TabContent
+								vertical
+								pills
+								on:tab={(e) => {
+									worldTab = 0;
+									datacenterTab = e.detail;
+								}}
+							>
+								{#each Array.from(purchasesServers.entries()) as [datacenter, worlds], i}
+									<TabPane
+										id={`datacenter-${i}`}
+										tabId={i}
+										active={datacenterTab == i}
+										class="w-100"
+									>
+										<span slot="tab">
+											{datacenterNames[datacenter] ?? datacenter}
+										</span>
+
+										<TabContent
+											on:tab={(e) => {
+												worldTab = e.detail;
+											}}
+										>
+											{#each Array.from(worlds.entries()) as [world_name, listings], ii}
+												<TabPane id={`world-${i}-${ii}`} tabId={ii} active={worldTab == ii}>
+													<span slot="tab">
+														{world_name}
+													</span>
+
+													<Table hover responsive class="mt-2">
+														<thead>
+															<th>Price per unit</th>
+															<th>Quantity</th>
+															<th>Total</th>
+															<th>Purchased At</th>
+														</thead>
+														<tbody>
+															{#each listings as listing}
+																<tr>
+																	<td>{listing.price_per_unit}</td>
+																	<td>{listing.quantity}</td>
+																	<td>{listing.quantity * listing.price_per_unit}</td>
+																	<td>{new Date(listing.purchase_time).toLocaleString()}</td>
+																</tr>
+															{/each}
+														</tbody>
+													</Table>
+												</TabPane>
+											{/each}
+										</TabContent>
+									</TabPane>
+								{/each}
+							</TabContent>
+						</CardText>
+					</CardBody>
+				</Card>
+			</Col>
+		</Row>
 	{/await}
 </Container>

@@ -85,9 +85,19 @@ export class HubApi {
 export const hubApi = new HubApi();
 
 export interface XivApiItem {
+	Description: string;
 	Icon: string;
 	IconHD: string;
 	Name: string;
+	ItemKind: {
+		ID: string;
+		Name: string;
+	};
+	ItemSearchCategory: {
+		Category: number;
+		Name: string;
+		IconHD: string;
+	};
 }
 
 export class XivApi {
@@ -101,7 +111,11 @@ export class XivApi {
 		if (item !== undefined) {
 			return item;
 		} else {
-			const res = await fetch(this.apiBase(`/item/${item_id}?columns=Name,Icon,IconHD`));
+			const res = await fetch(
+				this.apiBase(
+					`/item/${item_id}?columns=Name,Icon,IconHD,Description,ItemKind.Name,ItemKind.ID,ItemSearchCategory.Category,ItemSearchCategory.IconHD,ItemSearchCategory.Name`
+				)
+			);
 			const resItem: XivApiItem = await res.json();
 
 			const item = {

@@ -87,7 +87,7 @@
 									<td>{upload.item_id}</td>
 								{/await}
 								<td>{xivApi.getServer(upload.world_id).name}</td>
-								<td>{new Date(upload.upload_time).toUTCString()}</td>
+								<td>{new Date(upload.upload_time).toLocaleString()}</td>
 								<td>{upload.upload_type == 0 ? 'Listings' : 'Purchases'}</td>
 							</tr>
 						{/each}

@@ -1,22 +1,20 @@
 import Dexie, { type Table } from 'dexie';
+import type { XivApiItem } from './api';
 
 // client-side database for caching game items, etc.
 
-export interface CachedItem {
+export interface CachedItem extends XivApiItem {
 	Id: number;
-	Icon: string;
-	IconHD: string;
-	Name: string;
 }
 
 export class XivHubDb extends Dexie {
 	items!: Table<CachedItem>;
 
 	constructor() {
-		super('xivhub-market');
+		super('xivhub-marketv2');
 
-		this.version(1).stores({
-			items: '++Id, Icon, IconHD, Name'
+		this.version(2).stores({
+			items: '++Id, Name'
 		});
 	}
 }
