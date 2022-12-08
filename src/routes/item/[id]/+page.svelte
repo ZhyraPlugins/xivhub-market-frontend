@@ -1,34 +1,22 @@
 <script lang="ts">
 	import { hubApi, xivApi, type Listing, type Purchase } from '$lib/api';
 	import { numberWithCommas } from '$lib/util';
-	import {
-		Card,
-		CardBody,
-		CardHeader,
-		CardText,
-		CardTitle,
-		Col,
-		Container,
-		Row,
-		Spinner,
-		TabContent,
-		Table,
-		TabPane
-	} from 'sveltestrap';
+	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Row, Spinner, TabContent, Table, TabPane } from 'sveltestrap';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
 	// Map -> datacenter -> world -> listings
 	export const listingsServers: Map<number, Map<string, Listing[]>> = new Map();
 	export const purchasesServers: Map<number, Map<string, Purchase[]>> = new Map();
-	export const globalAverageHqPrice = data.purchases
-		.filter((x) => x.hq)
-		.map((x) => x.price_per_unit)
-		.reduce((a, b) => a + b, 0);
-	export const globalAverageNqPrice = data.purchases
-		.filter((x) => !x.hq)
-		.map((x) => x.price_per_unit)
-		.reduce((a, b) => a + b, 0);
+
+	let globalhqPurchases = data.purchases.filter((x) => x.hq);
+	export const globalAverageHqPrice = Math.round(
+		globalhqPurchases.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / globalhqPurchases.length
+	);
+	let globalnqPurchases = data.purchases.filter((x) => !x.hq);
+	export const globalAverageNqPrice = Math.round(
+		globalnqPurchases.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / globalnqPurchases.length
+	);
 
 	// Put the listings inside each datacenter, world
 	for (let listing of data.listings) {
@@ -161,12 +149,7 @@
 								}}
 							>
 								{#each Array.from(listingsServers.entries()) as [datacenter, worlds], i}
-									<TabPane
-										id={`datacenter-${i}`}
-										tabId={i}
-										active={datacenterTab == i}
-										class="w-100"
-									>
+									<TabPane id={`datacenter-${i}`} tabId={i} active={datacenterTab == i} class="w-100">
 										<span slot="tab">
 											{datacenterNames[datacenter] ?? datacenter}
 										</span>
@@ -197,11 +180,7 @@
 																<tr>
 																	<td>{numberWithCommas(listing.price_per_unit)}</td>
 																	<td>{listing.quantity}</td>
-																	<td
-																		>{numberWithCommas(
-																			listing.quantity * listing.price_per_unit
-																		)}</td
-																	>
+																	<td>{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
 																	<td>{new Date(listing.last_review_time).toLocaleString()}</td>
 																</tr>
 															{/each}
@@ -221,11 +200,7 @@
 																<tr>
 																	<td>{numberWithCommas(listing.price_per_unit)}</td>
 																	<td>{listing.quantity}</td>
-																	<td
-																		>{numberWithCommas(
-																			listing.quantity * listing.price_per_unit
-																		)}</td
-																	>
+																	<td>{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
 																	<td>{new Date(listing.last_review_time).toLocaleString()}</td>
 																</tr>
 															{/each}
@@ -255,12 +230,7 @@
 								}}
 							>
 								{#each Array.from(purchasesServers.entries()) as [datacenter, worlds], i}
-									<TabPane
-										id={`datacenter-${i}`}
-										tabId={i}
-										active={datacenterTab == i}
-										class="w-100"
-									>
+									<TabPane id={`datacenter-${i}`} tabId={i} active={datacenterTab == i} class="w-100">
 										<span slot="tab">
 											{datacenterNames[datacenter] ?? datacenter}
 										</span>
@@ -271,14 +241,14 @@
 											}}
 										>
 											{#each Array.from(worlds.entries()) as [world_name, listings], ii}
-												{@const averageNqPriceUnit = listings
-													.filter((x) => !x.hq)
-													.map((x) => x.price_per_unit)
-													.reduce((a, b) => a + b, 0)}
-												{@const averageHqPriceUnit = listings
-													.filter((x) => x.hq)
-													.map((x) => x.price_per_unit)
-													.reduce((a, b) => a + b, 0)}
+												{@const nqListings = listings.filter((x) => !x.hq)}
+												{@const averageNqPriceUnit = Math.round(
+													nqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / nqListings.length
+												)}
+												{@const hqListings = listings.filter((x) => x.hq)}
+												{@const averageHqPriceUnit = Math.round(
+													hqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / hqListings.length
+												)}
 												<TabPane id={`world-${i}-${ii}`} tabId={ii} active={worldTab == ii}>
 													<span slot="tab">
 														{world_name}
@@ -302,11 +272,7 @@
 																<tr>
 																	<td>{numberWithCommas(listing.price_per_unit)}</td>
 																	<td>{listing.quantity}</td>
-																	<td
-																		>{numberWithCommas(
-																			listing.quantity * listing.price_per_unit
-																		)}</td
-																	>
+																	<td>{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
 																	<td>{listing.hq.toString()}</td>
 																	<td>{new Date(listing.purchase_time).toLocaleString()}</td>
 																</tr>

@@ -49,9 +49,7 @@
 	<Alert color="warning">
 		<h4 class="alert-heading text-capitalize">Work in progress</h4>
 		<p>
-			The site is currently in live development. You can join our <a
-				href="https://discord.gg/GZK9aME8wN">discord</a
-			>
+			The site is currently in live development. You can join our <a href="https://discord.gg/GZK9aME8wN">discord</a>
 			or follow us on <a href="https://twitter.com/XivHub">twitter</a>!
 		</p>
 		<p class="mb-0">
