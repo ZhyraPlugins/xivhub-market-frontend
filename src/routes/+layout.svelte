@@ -14,6 +14,12 @@
 
 <Styles />
 
+<svelte:head>
+	<title>Xivhub Market</title>
+	<meta name="description" content="View FFXIV market board data." />
+	<meta name="author" content="Zhyra" />
+</svelte:head>
+
 <Navbar color="light" light expand="lg" class="mb-4">
 	<NavbarBrand href="/" class="me-auto">XivHub Market</NavbarBrand>
 	<Nav navbar>
