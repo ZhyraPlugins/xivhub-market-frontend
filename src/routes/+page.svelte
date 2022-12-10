@@ -5,21 +5,7 @@
 	import { Alert, Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Row, Table } from 'sveltestrap';
 	import type { PageData } from './$types';
 
-	export let itemData: Map<number, CachedItem> = new Map();
 	export let data: PageData;
-
-	async function getItemData() {
-		for (var item of data.last_uploads) {
-			if (!itemData.has(item.item_id)) {
-				const res = await xivApi.getItem(fetch, item.item_id);
-				itemData.set(item.item_id, res);
-			}
-		}
-
-		return itemData;
-	}
-
-	let uploadItemData = getItemData();
 </script>
 
 <Container>
@@ -55,17 +41,8 @@
 					<tbody>
 						{#each data.last_uploads as upload}
 							<tr>
-								{#await uploadItemData}
-									<td>{upload.item_id}</td>
-									<td>{upload.item_id}</td>
-								{:then itemData}
-									{@const item = itemData.get(upload.item_id)}
-									<td><img alt={`${upload.item_id} Icon`} src={`https://xivapi.com${item?.Icon}`} /></td>
-									<td><a class="text-decoration-none fw-bold " href={`/item/${item?.Id}`}>{item?.Name}</a></td>
-								{:catch error}
-									<td>{upload.item_id}</td>
-									<td>{upload.item_id}</td>
-								{/await}
+								<td><img alt={`${upload.item_id} Icon`} src={xivApi.apiBase(upload.icon)} /></td>
+								<td><a class="text-decoration-none fw-bold " href={`/item/${upload.item_id}`}>{upload.name}</a></td>
 								<td>{xivApi.getServer(upload.world_id).name}</td>
 								<td>{new Date(upload.upload_time).toLocaleString()}</td>
 								<td>{upload.upload_type == 0 ? 'Listings' : 'Purchases'}</td>

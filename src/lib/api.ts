@@ -5,6 +5,8 @@ import { db, type CachedItem } from './db';
 
 export interface Upload {
 	id: string;
+	name: string;
+	icon: string;
 	uploader_id: string;
 	upload_time: string;
 	world_id: number;
