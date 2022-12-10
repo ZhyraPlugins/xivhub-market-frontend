@@ -114,6 +114,8 @@
 <svelte:head>
 	<title>{item.name} | Xivhub Market</title>
 	<meta name="description" content={`Market listings and purchases for ${item.name}.`} />
+	<meta property="og:image" content={xivApi.apiBase(item.icon_hd)} />
+	<meta property="og:description" content={`Market listings and purchases for ${item.name}.`} />
 </svelte:head>
 
 <Container fluid>

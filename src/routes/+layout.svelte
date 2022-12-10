@@ -21,6 +21,7 @@
 	<title>XivHub Market</title>
 	<meta name="description" content="View FFXIV market board data." />
 	<meta name="author" content="Zhyra" />
+	<meta property="og:site_name" content="XivHub Market" />
 </svelte:head>
 
 <Styles />
