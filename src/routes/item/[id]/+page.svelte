@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { hubApi, xivApi, type Listing, type Purchase } from '$lib/api';
+	import { hubApi, xivApi, type Listing, type Purchase, type XivItemInfo } from '$lib/api';
 	import { numberWithCommas } from '$lib/util';
 	import { get } from 'svelte/store';
 	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Row, Spinner, TabContent, Table, TabPane } from 'sveltestrap';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
+	export let item: XivItemInfo = data.listings.item;
+
 	// Map -> datacenter -> world -> listings
 	export const listingsServers: Map<number, Map<string, Listing[]>> = new Map();
 	export const purchasesServers: Map<number, Map<string, Purchase[]>> = new Map();
@@ -13,17 +15,17 @@
 	export const cheapestNQListingPerDatacenter: Map<number, Listing> = new Map();
 	export const cheapestHQListingPerDatacenter: Map<number, Listing> = new Map();
 
-	let globalhqPurchases = data.purchases.filter((x) => x.hq);
+	let globalhqPurchases = data.purchases.purchases.filter((x) => x.hq);
 	export const globalAverageHqPrice = Math.round(
 		globalhqPurchases.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / globalhqPurchases.length
 	);
-	let globalnqPurchases = data.purchases.filter((x) => !x.hq);
+	let globalnqPurchases = data.purchases.purchases.filter((x) => !x.hq);
 	export const globalAverageNqPrice = Math.round(
 		globalnqPurchases.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / globalnqPurchases.length
 	);
 
 	// Put the listings inside each datacenter, world
-	for (let listing of data.listings) {
+	for (let listing of data.listings.listings) {
 		const world = xivApi.getServer(listing.world_id);
 		let worlds = listingsServers.get(world.datacenter);
 
@@ -66,7 +68,7 @@
 		listings.push(listing);
 	}
 
-	for (let purchase of data.purchases) {
+	for (let purchase of data.purchases.purchases) {
 		const world = xivApi.getServer(purchase.world_id);
 		let worlds = purchasesServers.get(world.datacenter);
 
@@ -110,227 +112,215 @@
 </script>
 
 <svelte:head>
-	{#await itemData then itemData}
-		<title>{itemData.Name} | Xivhub Market</title>
-	{/await}
+	<title>{item.name} | Xivhub Market</title>
+	<meta name="description" content={`Market listings and purchases for ${item.name}.`} />
 </svelte:head>
 
 <Container fluid>
-	{#await itemData}
-		<Card class="mt-3">
-			<CardBody>
-				<CardText>
-					<h2>Loading...</h2>
-					<Spinner />
-				</CardText>
-			</CardBody>
-		</Card>
-	{:then itemData}
-		<Container>
-			<Row>
-				<Col>
-					<Card class="mt-3">
-						<CardHeader>
-							<CardTitle>{itemData.Name}</CardTitle>
-						</CardHeader>
-						<CardBody>
-							<CardText>
-								<Row>
-									<Col xs={1}>
-										<img alt={`${itemData.Id} Icon`} src={`https://xivapi.com${itemData.IconHD}`} />
-										<img class="mt-2" src={xivApi.apiBase(itemData.ItemSearchCategory.IconHD)} />
-									</Col>
-									<Col>
-										<ul>
-											<li><b>Item Kind</b>: {itemData.ItemKind.Name}</li>
-											<li>
-												<b>Global Average HQ price</b>: {numberWithCommas(globalAverageHqPrice)}
-											</li>
-											<li>
-												<b>Global Average NQ price</b>: {numberWithCommas(globalAverageNqPrice)}
-											</li>
-										</ul>
-										<p style="white-space: pre-line">
-											{itemData.Description.replace(/[\n]+/g, '\n')}
-										</p>
-									</Col>
-								</Row>
-							</CardText>
-						</CardBody>
-					</Card>
-				</Col>
-			</Row>
-		</Container>
-
+	<Container>
 		<Row>
 			<Col>
 				<Card class="mt-3">
-					<CardHeader><CardTitle>Listings</CardTitle></CardHeader>
+					<CardHeader>
+						<CardTitle>{item.name}</CardTitle>
+					</CardHeader>
 					<CardBody>
 						<CardText>
-							<TabContent
-								vertical
-								pills
-								on:tab={(e) => {
-									worldTab = 0;
-									datacenterTab = e.detail;
-								}}
-							>
-								{#each Array.from(listingsServers.entries()) as [datacenter, worlds], i}
-									{@const dataCenterName = datacenterNames[datacenter] ?? datacenter}
-									<TabPane id={`datacenter-${i}`} tabId={i} active={datacenterTab == i} class="w-100">
-										<span slot="tab">
-											{dataCenterName}
-										</span>
-										<TabContent
-											on:tab={(e) => {
-												worldTab = e.detail;
-											}}
-										>
-											{#each Array.from(worlds.entries()) as [world_name, listings], ii}
-												{@const hqListings = listings.filter((x) => x.hq)}
-												{@const nqListings = listings.filter((x) => !x.hq)}
-												<TabPane id={`world-${i}-${ii}`} tabId={ii} active={worldTab == ii}>
-													<span slot="tab">
-														{world_name}
-													</span>
-													{#if cheapestHQListingPerDatacenter.has(datacenter)}
-														{@const cheapest = cheapestHQListingPerDatacenter.get(datacenter)}
-														<p class="mb-0">
-															Cheapest HQ on <b>{dataCenterName}</b> at
-															<b>{xivApi.getServer(cheapest?.world_id).name}</b> for <b>{numberWithCommas(cheapest?.price_per_unit)}</b>
-														</p>
-													{/if}
-													{#if cheapestNQListingPerDatacenter.has(datacenter)}
-														{@const cheapest = cheapestNQListingPerDatacenter.get(datacenter)}
-														<p class="mt-0">
-															Cheapest NQ on <b>{dataCenterName}</b> at
-															<b>{xivApi.getServer(cheapest?.world_id).name}</b> for <b>{numberWithCommas(cheapest?.price_per_unit)}</b>
-														</p>
-													{/if}
-
-													<h4 class="mt-2">HQ Listings</h4>
-													<Table hover responsive class="mt-2">
-														<thead>
-															<th>Price per unit</th>
-															<th>Quantity</th>
-															<th>Total</th>
-															<th>Last Review</th>
-														</thead>
-														<tbody>
-															{#each hqListings as listing}
-																<tr>
-																	<td>{numberWithCommas(listing.price_per_unit)}</td>
-																	<td>{listing.quantity}</td>
-																	<td>{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
-																	<td>{new Date(listing.last_review_time).toLocaleString()}</td>
-																</tr>
-															{/each}
-														</tbody>
-													</Table>
-
-													<h4 class="mt-2">NQ Listings</h4>
-													<Table hover responsive class="mt-2">
-														<thead>
-															<th>Price per unit</th>
-															<th>Quantity</th>
-															<th>Total</th>
-															<th>Last Review</th>
-														</thead>
-														<tbody>
-															{#each nqListings as listing}
-																<tr>
-																	<td>{numberWithCommas(listing.price_per_unit)}</td>
-																	<td>{listing.quantity}</td>
-																	<td>{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
-																	<td>{new Date(listing.last_review_time).toLocaleString()}</td>
-																</tr>
-															{/each}
-														</tbody>
-													</Table>
-												</TabPane>
-											{/each}
-										</TabContent>
-									</TabPane>
-								{/each}
-							</TabContent>
-						</CardText>
-					</CardBody>
-				</Card>
-			</Col>
-			<Col>
-				<Card class="mt-3">
-					<CardHeader><CardTitle>Purchases</CardTitle></CardHeader>
-					<CardBody>
-						<CardText>
-							<TabContent
-								vertical
-								pills
-								on:tab={(e) => {
-									worldTab = 0;
-									datacenterTab = e.detail;
-								}}
-							>
-								{#each Array.from(purchasesServers.entries()) as [datacenter, worlds], i}
-									<TabPane id={`datacenter-${i}`} tabId={i} active={datacenterTab == i} class="w-100">
-										<span slot="tab">
-											{datacenterNames[datacenter] ?? datacenter}
-										</span>
-
-										<TabContent
-											on:tab={(e) => {
-												worldTab = e.detail;
-											}}
-										>
-											{#each Array.from(worlds.entries()) as [world_name, listings], ii}
-												{@const nqListings = listings.filter((x) => !x.hq)}
-												{@const averageNqPriceUnit = Math.round(
-													nqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / nqListings.length
-												)}
-												{@const hqListings = listings.filter((x) => x.hq)}
-												{@const averageHqPriceUnit = Math.round(
-													hqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / hqListings.length
-												)}
-												<TabPane id={`world-${i}-${ii}`} tabId={ii} active={worldTab == ii}>
-													<span slot="tab">
-														{world_name}
-													</span>
-
-													<ul class="mt-2">
-														<li>Average HQ Price: {numberWithCommas(averageHqPriceUnit)}</li>
-														<li>Average NQ Price: {numberWithCommas(averageNqPriceUnit)}</li>
-													</ul>
-
-													<Table hover responsive class="mt-2">
-														<thead>
-															<th>Price per unit</th>
-															<th>Quantity</th>
-															<th>Total</th>
-															<th>HQ</th>
-															<th>Purchased At</th>
-														</thead>
-														<tbody>
-															{#each listings as listing}
-																<tr>
-																	<td>{numberWithCommas(listing.price_per_unit)}</td>
-																	<td>{listing.quantity}</td>
-																	<td>{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
-																	<td>{listing.hq.toString()}</td>
-																	<td>{new Date(listing.purchase_time).toLocaleString()}</td>
-																</tr>
-															{/each}
-														</tbody>
-													</Table>
-												</TabPane>
-											{/each}
-										</TabContent>
-									</TabPane>
-								{/each}
-							</TabContent>
+							<Row>
+								<Col xs={1}>
+									<img alt={`${item.name} Icon`} src={`https://xivapi.com${item.icon_hd}`} />
+									<img class="mt-2" src={xivApi.apiBase(item.item_search_category_iconhd)} />
+								</Col>
+								<Col>
+									<ul>
+										<li><b>Item Kind</b>: {item.item_kind_name}</li>
+										<li>
+											<b>Global Average HQ price</b>: {numberWithCommas(globalAverageHqPrice)}
+										</li>
+										<li>
+											<b>Global Average NQ price</b>: {numberWithCommas(globalAverageNqPrice)}
+										</li>
+									</ul>
+									<p style="white-space: pre-line">
+										{item.description.replace(/[\n]+/g, '\n')}
+									</p>
+								</Col>
+							</Row>
 						</CardText>
 					</CardBody>
 				</Card>
 			</Col>
 		</Row>
-	{/await}
+	</Container>
+
+	<Row>
+		<Col>
+			<Card class="mt-3">
+				<CardHeader><CardTitle>Listings</CardTitle></CardHeader>
+				<CardBody>
+					<CardText>
+						<TabContent
+							vertical
+							pills
+							on:tab={(e) => {
+								worldTab = 0;
+								datacenterTab = e.detail;
+							}}
+						>
+							{#each Array.from(listingsServers.entries()) as [datacenter, worlds], i}
+								{@const dataCenterName = datacenterNames[datacenter] ?? datacenter}
+								<TabPane id={`datacenter-${i}`} tabId={i} active={datacenterTab == i} class="w-100">
+									<span slot="tab">
+										{dataCenterName}
+									</span>
+									<TabContent
+										on:tab={(e) => {
+											worldTab = e.detail;
+										}}
+									>
+										{#each Array.from(worlds.entries()) as [world_name, listings], ii}
+											{@const hqListings = listings.filter((x) => x.hq)}
+											{@const nqListings = listings.filter((x) => !x.hq)}
+											<TabPane id={`world-${i}-${ii}`} tabId={ii} active={worldTab == ii}>
+												<span slot="tab">
+													{world_name}
+												</span>
+												{#if cheapestHQListingPerDatacenter.has(datacenter)}
+													{@const cheapest = cheapestHQListingPerDatacenter.get(datacenter)}
+													<p class="mb-0">
+														Cheapest HQ on <b>{dataCenterName}</b> at
+														<b>{xivApi.getServer(cheapest?.world_id).name}</b> for <b>{numberWithCommas(cheapest?.price_per_unit)}</b>
+													</p>
+												{/if}
+												{#if cheapestNQListingPerDatacenter.has(datacenter)}
+													{@const cheapest = cheapestNQListingPerDatacenter.get(datacenter)}
+													<p class="mt-0">
+														Cheapest NQ on <b>{dataCenterName}</b> at
+														<b>{xivApi.getServer(cheapest?.world_id).name}</b> for <b>{numberWithCommas(cheapest?.price_per_unit)}</b>
+													</p>
+												{/if}
+
+												<h4 class="mt-2">HQ Listings</h4>
+												<Table hover responsive class="mt-2">
+													<thead>
+														<th>Price per unit</th>
+														<th>Quantity</th>
+														<th>Total</th>
+														<th>Last Review</th>
+													</thead>
+													<tbody>
+														{#each hqListings as listing}
+															<tr>
+																<td>{numberWithCommas(listing.price_per_unit)}</td>
+																<td>{listing.quantity}</td>
+																<td>{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
+																<td>{new Date(listing.last_review_time).toLocaleString()}</td>
+															</tr>
+														{/each}
+													</tbody>
+												</Table>
+
+												<h4 class="mt-2">NQ Listings</h4>
+												<Table hover responsive class="mt-2">
+													<thead>
+														<th>Price per unit</th>
+														<th>Quantity</th>
+														<th>Total</th>
+														<th>Last Review</th>
+													</thead>
+													<tbody>
+														{#each nqListings as listing}
+															<tr>
+																<td>{numberWithCommas(listing.price_per_unit)}</td>
+																<td>{listing.quantity}</td>
+																<td>{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
+																<td>{new Date(listing.last_review_time).toLocaleString()}</td>
+															</tr>
+														{/each}
+													</tbody>
+												</Table>
+											</TabPane>
+										{/each}
+									</TabContent>
+								</TabPane>
+							{/each}
+						</TabContent>
+					</CardText>
+				</CardBody>
+			</Card>
+		</Col>
+		<Col>
+			<Card class="mt-3">
+				<CardHeader><CardTitle>Purchases</CardTitle></CardHeader>
+				<CardBody>
+					<CardText>
+						<TabContent
+							vertical
+							pills
+							on:tab={(e) => {
+								worldTab = 0;
+								datacenterTab = e.detail;
+							}}
+						>
+							{#each Array.from(purchasesServers.entries()) as [datacenter, worlds], i}
+								<TabPane id={`datacenter-${i}`} tabId={i} active={datacenterTab == i} class="w-100">
+									<span slot="tab">
+										{datacenterNames[datacenter] ?? datacenter}
+									</span>
+
+									<TabContent
+										on:tab={(e) => {
+											worldTab = e.detail;
+										}}
+									>
+										{#each Array.from(worlds.entries()) as [world_name, listings], ii}
+											{@const nqListings = listings.filter((x) => !x.hq)}
+											{@const averageNqPriceUnit = Math.round(
+												nqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / nqListings.length
+											)}
+											{@const hqListings = listings.filter((x) => x.hq)}
+											{@const averageHqPriceUnit = Math.round(
+												hqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / hqListings.length
+											)}
+											<TabPane id={`world-${i}-${ii}`} tabId={ii} active={worldTab == ii}>
+												<span slot="tab">
+													{world_name}
+												</span>
+
+												<ul class="mt-2">
+													<li>Average HQ Price: {numberWithCommas(averageHqPriceUnit)}</li>
+													<li>Average NQ Price: {numberWithCommas(averageNqPriceUnit)}</li>
+												</ul>
+
+												<Table hover responsive class="mt-2">
+													<thead>
+														<th>Price per unit</th>
+														<th>Quantity</th>
+														<th>Total</th>
+														<th>HQ</th>
+														<th>Purchased At</th>
+													</thead>
+													<tbody>
+														{#each listings as listing}
+															<tr>
+																<td>{numberWithCommas(listing.price_per_unit)}</td>
+																<td>{listing.quantity}</td>
+																<td>{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
+																<td>{listing.hq.toString()}</td>
+																<td>{new Date(listing.purchase_time).toLocaleString()}</td>
+															</tr>
+														{/each}
+													</tbody>
+												</Table>
+											</TabPane>
+										{/each}
+									</TabContent>
+								</TabPane>
+							{/each}
+						</TabContent>
+					</CardText>
+				</CardBody>
+			</Card>
+		</Col>
+	</Row>
 </Container>

@@ -50,7 +50,36 @@ export interface Stats {
 	unique_items: number;
 }
 
+export interface SimpleItem {
+	item_id: number;
+	listings: number;
+}
+
 type Fetch = (input: RequestInfo | URL, init?: RequestInit | undefined) => Promise<Response>;
+
+export interface XivItemInfo {
+	item_id: number;
+	name: string;
+	icon: string;
+	icon_hd: string;
+	description: string;
+	item_kind_name: string;
+	item_kind_id: number;
+	item_search_category: number;
+	item_search_category_iconhd: string;
+	item_search_category_name: string;
+}
+
+export interface ListingsResponse {
+	listings: Listing[];
+	item: XivItemInfo;
+}
+
+export interface PurchasesResponse {
+	purchases: Purchase[];
+	item: XivItemInfo;
+	page: number;
+}
 
 export class HubApi {
 	getUrl(path: string) {
@@ -63,13 +92,13 @@ export class HubApi {
 		return await res.json();
 	}
 
-	async listings(fetch: Fetch, item_id: number): Promise<Listing[]> {
+	async listings(fetch: Fetch, item_id: number): Promise<ListingsResponse> {
 		const res = await fetch(this.getUrl(`/item/${item_id}`));
 
 		return await res.json();
 	}
 
-	async purchases(fetch: Fetch, item_id: number, page?: number): Promise<Purchase[]> {
+	async purchases(fetch: Fetch, item_id: number, page?: number): Promise<PurchasesResponse> {
 		const res = await fetch(this.getUrl(`/item/${item_id}/purchases?page=${page ?? 0}`));
 
 		return await res.json();
@@ -77,6 +106,12 @@ export class HubApi {
 
 	async stats(fetch: Fetch): Promise<Stats> {
 		const res = await fetch(this.getUrl(`/stats`));
+
+		return await res.json();
+	}
+
+	async list_items(fetch: Fetch, page: number): Promise<SimpleItem[]> {
+		const res = await fetch(this.getUrl(`/item?page=${page}`));
 
 		return await res.json();
 	}
