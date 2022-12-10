@@ -1,6 +1,7 @@
 import { PUBLIC_MARKET_API } from '$env/static/public';
 //import { PUBLIC_XIVAPI_KEY } from '$env/static/public';
 import Servers from '../servers.json';
+import qs from 'query-string';
 
 export interface Upload {
 	id: string;
@@ -53,7 +54,16 @@ export interface Stats {
 
 export interface SimpleItem {
 	item_id: number;
-	listings: number;
+	name: string;
+	icon: string;
+	icon_hd: string;
+	description: string;
+	item_kind_name: string;
+	item_kind_id: number;
+	item_search_category: number;
+	item_search_category_iconhd: string;
+	item_search_category_name: string;
+	listings: number | null;
 }
 
 type Fetch = (input: RequestInfo | URL, init?: RequestInit | undefined) => Promise<Response>;
@@ -80,6 +90,12 @@ export interface PurchasesResponse {
 	purchases: Purchase[];
 	item: XivItemInfo;
 	page: number;
+}
+
+export interface ListItemsReponse {
+	items: SimpleItem[];
+	page: number;
+	total_pages: number;
 }
 
 export class HubApi {
@@ -111,8 +127,18 @@ export class HubApi {
 		return await res.json();
 	}
 
-	async list_items(fetch: Fetch, page: number): Promise<SimpleItem[]> {
-		const res = await fetch(this.getUrl(`/item?page=${page}`));
+	async list_items(fetch: Fetch, page: number, search?: string): Promise<ListItemsReponse> {
+		const query: Record<string, unknown> = {
+			page
+		};
+
+		if (search !== undefined) {
+			search = search.trim();
+
+			if (search !== '') query.search = search;
+		}
+
+		const res = await fetch(this.getUrl(`/item?${qs.stringify(query)}`));
 
 		return await res.json();
 	}

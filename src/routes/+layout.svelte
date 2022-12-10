@@ -30,6 +30,9 @@
 	<NavbarBrand href="/" class="me-auto">XivHub Market</NavbarBrand>
 	<Nav navbar>
 		<NavItem>
+			<NavLink href="/search">Search</NavLink>
+		</NavItem>
+		<NavItem>
 			<NavLink href="https://github.com/ZhyraPlugins/MarketUploader">Dalamud Upload Plugin</NavLink>
 		</NavItem>
 		<!--

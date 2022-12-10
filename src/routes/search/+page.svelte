@@ -1,47 +1,81 @@
 <script lang="ts">
-	import { hubApi, xivApi, type XivApiItem } from '$lib/api';
-	import StatCard from '$lib/components/StatCard.svelte';
-	import type { CachedItem } from '$lib/db';
-	import { Alert, Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Row, Table } from 'sveltestrap';
+	import { hubApi, xivApi } from '$lib/api';
+	import {
+		Button,
+		Card,
+		CardBody,
+		CardHeader,
+		CardText,
+		CardTitle,
+		Col,
+		Container,
+		Form,
+		FormGroup,
+		Input,
+		Label,
+		Pagination,
+		PaginationItem,
+		PaginationLink,
+		Row,
+		Table
+	} from 'sveltestrap';
 	import type { PageData } from './$types';
 
-	export let itemData: CachedItem[] = [];
 	export let data: PageData;
 
-	async function getItemData() {
-		for (var item of data.items) {
-			const res = await xivApi.getItem(fetch, item.item_id);
-			itemData.push(res);
-		}
+	let search = '';
+	let inputSearch = '';
+	let page = 0;
 
-		return itemData;
+	async function onSearch() {
+		search = inputSearch;
+		page = 0;
 	}
 
-	let uploadItemData = getItemData();
+	$: {
+		hubApi.list_items(fetch, page, search).then((items) => {
+			data = { items };
+		});
+	}
 </script>
 
 <Container>
-	{#await uploadItemData then itemData}
-		<Card class="mt-3">
-			<CardHeader><CardTitle>Search</CardTitle></CardHeader>
-			<CardBody>
-				<CardText>
-					<Table hover responsive>
-						<thead>
-							<th>Image</th>
-							<th>Item</th>
-						</thead>
-						<tbody>
-							{#each itemData as item}
-								<tr>
-									<td><img alt={`${item.Id} Icon`} src={`https://xivapi.com${item.Icon}`} /></td>
-									<td><a class="text-decoration-none fw-bold " href={`/item/${item.Id}`}>{item.Name}</a></td>
-								</tr>
-							{/each}
-						</tbody>
-					</Table>
-				</CardText>
-			</CardBody>
-		</Card>
-	{/await}
+	<Card class="mt-3">
+		<CardHeader><CardTitle>Search</CardTitle></CardHeader>
+		<CardBody>
+			<CardText>
+				<Form>
+					<FormGroup>
+						<Input type="text" name="search" bind:value={inputSearch} />
+					</FormGroup>
+					<Button color="primary" on:click={onSearch}>Search</Button>
+				</Form>
+
+				<Pagination class="mt-2">
+					{#each { length: data.items.total_pages + 1 } as _, i}
+						<PaginationItem active={page == i}>
+							<PaginationLink on:click={() => (page = i)}>{i + 1}</PaginationLink>
+						</PaginationItem>
+					{/each}
+				</Pagination>
+
+				<Table hover responsive>
+					<thead>
+						<th>Image</th>
+						<th>Item</th>
+						<th>Listings</th>
+					</thead>
+					<tbody>
+						{#each data.items.items as item}
+							<tr>
+								<td><img alt={`${item.item_id} Icon`} src={`https://xivapi.com${item.icon}`} /></td>
+								<td><a class="text-decoration-none fw-bold " href={`/item/${item.item_id}`}>{item.name}</a></td>
+								<td>{item.listings ?? 0}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</Table>
+			</CardText>
+		</CardBody>
+	</Card>
 </Container>
