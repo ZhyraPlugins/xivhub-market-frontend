@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { hubApi, xivApi, type XivApiItem } from '$lib/api';
+	import { xivApi } from '$lib/api';
 	import StatCard from '$lib/components/StatCard.svelte';
-	import type { CachedItem } from '$lib/db';
-	import { Alert, Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Row, Table } from 'sveltestrap';
+	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Row, Table } from 'sveltestrap';
 	import type { PageData } from './$types';
 
 	export let data: PageData;

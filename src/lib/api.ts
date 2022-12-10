@@ -1,7 +1,6 @@
 import { PUBLIC_MARKET_API } from '$env/static/public';
 //import { PUBLIC_XIVAPI_KEY } from '$env/static/public';
 import Servers from '../servers.json';
-import { db, type CachedItem } from './db';
 
 export interface Upload {
 	id: string;
@@ -140,28 +139,6 @@ export interface XivApiItem {
 export class XivApi {
 	apiBase(path: string) {
 		return `https://xivapi.com${path}`;
-	}
-
-	async getItem(fetch: Fetch, item_id: number): Promise<CachedItem> {
-		const item = await db.items.get(item_id);
-
-		if (item !== undefined) {
-			return item;
-		} else {
-			const res = await fetch(
-				this.apiBase(
-					`/item/${item_id}?columns=Name,Icon,IconHD,Description,ItemKind.Name,ItemKind.ID,ItemSearchCategory.Category,ItemSearchCategory.IconHD,ItemSearchCategory.Name`
-				)
-			);
-			const resItem: XivApiItem = await res.json();
-
-			const item = {
-				Id: item_id,
-				...resItem
-			};
-			await db.items.add(item);
-			return item;
-		}
 	}
 
 	getServer(world_id: number): { name: string; datacenter: number } {

@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { hubApi, xivApi, type Listing, type Purchase, type XivItemInfo } from '$lib/api';
+	import { xivApi, type Listing, type Purchase, type XivItemInfo } from '$lib/api';
 	import { numberWithCommas } from '$lib/util';
-	import { get } from 'svelte/store';
 	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Row, Spinner, TabContent, Table, TabPane } from 'sveltestrap';
 	import type { PageData } from './$types';
 
@@ -87,12 +86,6 @@
 		purchases.push(purchase);
 	}
 
-	async function getItemData() {
-		return await xivApi.getItem(fetch, data.item_id);
-	}
-
-	export let itemData = getItemData();
-
 	export const datacenterNames: Record<number, string> = {
 		1: 'Elemental',
 		2: 'Gaia',
@@ -137,7 +130,7 @@
 							<Row>
 								<Col xs={1}>
 									<img alt={`${item.name} Icon`} src={`https://xivapi.com${item.icon_hd}`} />
-									<img class="mt-2" src={xivApi.apiBase(item.item_search_category_iconhd)} />
+									<img alt="Item Category Icon" class="mt-2" src={xivApi.apiBase(item.item_search_category_iconhd)} />
 								</Col>
 								<Col>
 									<ul>
