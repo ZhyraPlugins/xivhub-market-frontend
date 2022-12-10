@@ -69,7 +69,7 @@
 	<hr />
 	<footer class="d-flex">
 		<Row class="w-100">
-			<Col xs={8}><p class="text-muted text-center">&copy; 2022 xivhub.org</p></Col>
+			<Col xs={8}><p class="text-muted text-center">&copy; 2022 <a href="https://xivhub.org">xivhub.org</a></p></Col>
 			<Col xs={2}>
 				<ListGroup flush>
 					<ListGroupItem tag="a" href="https://discord.gg/GZK9aME8wN">Discord</ListGroupItem>
