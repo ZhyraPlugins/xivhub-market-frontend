@@ -107,24 +107,26 @@
 	let datacenterTab: number | string = 0;
 	let worldTab: number | string = 0;
 
+	// On the backend, purchases are ordered by
+	let reversedGlobalNQPurchases = globalnqPurchases.slice(0).reverse();
 	let purchasesData = {
-		labels: globalnqPurchases.reverse().map((x) => new Date(x.purchase_time)),
+		labels: reversedGlobalNQPurchases.map((x) => new Date(x.purchase_time)),
 		datasets: [
 			{
 				label: 'Price per unit NQ',
-				data: globalnqPurchases.reverse().map((x) => x.price_per_unit),
-				borderWidth: 2,
-				fill: 'origin'
+				data: reversedGlobalNQPurchases.map((x) => x.price_per_unit),
+				borderWidth: 2
 			}
 		]
 	};
 
+	let reversedGlobalHQPurchases = globalhqPurchases.slice(0).reverse();
 	let purchasesHQData = {
-		labels: globalhqPurchases.reverse().map((x) => new Date(x.purchase_time)),
+		labels: reversedGlobalHQPurchases.map((x) => new Date(x.purchase_time)),
 		datasets: [
 			{
 				label: 'Price per unit HQ',
-				data: globalhqPurchases.reverse().map((x) => x.price_per_unit),
+				data: reversedGlobalHQPurchases.map((x) => x.price_per_unit),
 				borderWidth: 2,
 				fill: 'origin'
 			}
