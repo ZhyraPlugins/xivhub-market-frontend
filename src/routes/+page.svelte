@@ -5,6 +5,7 @@
 	import type { PageData } from './$types';
 	import { Bar } from 'svelte-chartjs';
 	import 'chart.js/auto';
+	import 'chartjs-adapter-date-fns';
 
 	export let data: PageData;
 
