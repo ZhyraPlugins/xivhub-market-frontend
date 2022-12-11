@@ -3,6 +3,10 @@
 	import { numberWithCommas } from '$lib/util';
 	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Row, Spinner, TabContent, Table, TabPane } from 'sveltestrap';
 	import type { PageData } from './$types';
+	import { formatDistanceToNow } from 'date-fns';
+	import { Line } from 'svelte-chartjs';
+	import 'chart.js/auto';
+	import 'chartjs-adapter-date-fns';
 
 	export let data: PageData;
 	export let item: XivItemInfo = data.listings.item;
@@ -102,6 +106,30 @@
 
 	let datacenterTab: number | string = 0;
 	let worldTab: number | string = 0;
+
+	let purchasesData = {
+		labels: globalnqPurchases.reverse().map((x) => new Date(x.purchase_time)),
+		datasets: [
+			{
+				label: 'Price per unit NQ',
+				data: globalnqPurchases.reverse().map((x) => x.price_per_unit),
+				borderWidth: 2,
+				fill: 'origin'
+			}
+		]
+	};
+
+	let purchasesHQData = {
+		labels: globalhqPurchases.reverse().map((x) => new Date(x.purchase_time)),
+		datasets: [
+			{
+				label: 'Price per unit HQ',
+				data: globalhqPurchases.reverse().map((x) => x.price_per_unit),
+				borderWidth: 2,
+				fill: 'origin'
+			}
+		]
+	};
 </script>
 
 <svelte:head>
@@ -147,6 +175,68 @@
 									</p>
 								</Col>
 							</Row>
+						</CardText>
+					</CardBody>
+				</Card>
+			</Col>
+		</Row>
+		<Row class="mt-2">
+			<Col>
+				<Card>
+					<CardBody>
+						<CardText class="text-center">
+							<Line
+								data={purchasesData}
+								options={{
+									responsive: true,
+									interaction: {
+										mode: 'nearest',
+										axis: 'x',
+										intersect: false
+									},
+									scales: {
+										x: {
+											type: 'time',
+											ticks: {
+												source: 'auto',
+												// Disabled rotation for performance
+												maxRotation: 0,
+												autoSkip: true
+											}
+										}
+									}
+								}}
+							/>
+						</CardText>
+					</CardBody>
+				</Card>
+			</Col>
+			<Col>
+				<Card>
+					<CardBody>
+						<CardText class="text-center">
+							<Line
+								data={purchasesHQData}
+								options={{
+									responsive: true,
+									interaction: {
+										mode: 'nearest',
+										axis: 'x',
+										intersect: false
+									},
+									scales: {
+										x: {
+											type: 'time',
+											ticks: {
+												source: 'auto',
+												// Disabled rotation for performance
+												maxRotation: 0,
+												autoSkip: true
+											}
+										}
+									}
+								}}
+							/>
 						</CardText>
 					</CardBody>
 				</Card>

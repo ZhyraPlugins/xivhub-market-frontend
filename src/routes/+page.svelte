@@ -9,7 +9,7 @@
 	export let data: PageData;
 
 	let uploadsData = {
-		labels: data.stats.uploads_per_day.map((x) => new Date(x.day).toLocaleDateString()),
+		labels: data.stats.uploads_per_day.map((x) => new Date(x.day)),
 		datasets: [
 			{
 				label: 'Upload Count',
@@ -20,7 +20,7 @@
 	};
 
 	let purchasesData = {
-		labels: data.stats.purchase_by_day.map((x) => new Date(x.day).toLocaleDateString()),
+		labels: data.stats.purchase_by_day.map((x) => new Date(x.day)),
 		datasets: [
 			{
 				label: 'Purchases by Day',
@@ -30,6 +30,10 @@
 		]
 	};
 </script>
+
+<svelte:head>
+	<title>Xivhub Market</title>
+</svelte:head>
 
 <Container>
 	<Row class="gap-2">
@@ -55,7 +59,26 @@
 			<Card>
 				<CardBody>
 					<CardText class="text-center">
-						<Bar data={uploadsData} options={{ responsive: true }} />
+						<Bar
+							data={uploadsData}
+							options={{
+								responsive: true,
+								scales: {
+									x: {
+										type: 'time',
+										ticks: {
+											source: 'auto',
+											// Disabled rotation for performance
+											maxRotation: 0,
+											autoSkip: true
+										},
+										time: {
+											unit: 'day'
+										}
+									}
+								}
+							}}
+						/>
 					</CardText>
 				</CardBody>
 			</Card>
@@ -64,7 +87,26 @@
 			<Card>
 				<CardBody>
 					<CardText class="text-center">
-						<Bar data={purchasesData} options={{ responsive: true }} />
+						<Bar
+							data={purchasesData}
+							options={{
+								responsive: true,
+								scales: {
+									x: {
+										type: 'time',
+										ticks: {
+											source: 'auto',
+											// Disabled rotation for performance
+											maxRotation: 0,
+											autoSkip: true
+										},
+										time: {
+											unit: 'day'
+										}
+									}
+								}
+							}}
+						/>
 					</CardText>
 				</CardBody>
 			</Card>
