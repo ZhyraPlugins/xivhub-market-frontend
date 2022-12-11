@@ -50,6 +50,8 @@ export interface Stats {
 	total_purchases: number;
 	unique_uploaders: number;
 	unique_items: number;
+	uploads_per_day: { count: number; day: string }[];
+	purchase_by_day: { count: number; day: string }[];
 }
 
 export interface SimpleItem {

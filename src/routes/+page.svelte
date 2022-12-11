@@ -3,8 +3,32 @@
 	import StatCard from '$lib/components/StatCard.svelte';
 	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Row, Table } from 'sveltestrap';
 	import type { PageData } from './$types';
+	import { Bar } from 'svelte-chartjs';
+	import 'chart.js/auto';
 
 	export let data: PageData;
+
+	let uploadsData = {
+		labels: data.stats.uploads_per_day.map((x) => new Date(x.day).toLocaleDateString()),
+		datasets: [
+			{
+				label: 'Upload Count',
+				data: data.stats.uploads_per_day.map((x) => x.count),
+				borderWidth: 2
+			}
+		]
+	};
+
+	let purchasesData = {
+		labels: data.stats.purchase_by_day.map((x) => new Date(x.day).toLocaleDateString()),
+		datasets: [
+			{
+				label: 'Purchases by Day',
+				data: data.stats.purchase_by_day.map((x) => x.count),
+				borderWidth: 2
+			}
+		]
+	};
 </script>
 
 <Container>
@@ -25,6 +49,28 @@
 			<StatCard title="Uploaders" data={data.stats.unique_uploaders} />
 		</Col>
 	</Row>
+
+	<Row class="gap-2 mt-2">
+		<Col>
+			<Card>
+				<CardBody>
+					<CardText class="text-center">
+						<Bar data={uploadsData} options={{ responsive: true }} />
+					</CardText>
+				</CardBody>
+			</Card>
+		</Col>
+		<Col>
+			<Card>
+				<CardBody>
+					<CardText class="text-center">
+						<Bar data={purchasesData} options={{ responsive: true }} />
+					</CardText>
+				</CardBody>
+			</Card>
+		</Col>
+	</Row>
+
 	<Card class="mt-3">
 		<CardHeader><CardTitle>Latest Uploads</CardTitle></CardHeader>
 		<CardBody>
