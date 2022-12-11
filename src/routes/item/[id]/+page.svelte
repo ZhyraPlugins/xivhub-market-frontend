@@ -115,7 +115,8 @@
 			{
 				label: 'Price per unit NQ',
 				data: reversedGlobalNQPurchases.map((x) => x.price_per_unit),
-				borderWidth: 2
+				borderWidth: 2,
+				fill: 'origin'
 			}
 		]
 	};
