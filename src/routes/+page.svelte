@@ -6,6 +6,7 @@
 	import { Bar } from 'svelte-chartjs';
 	import 'chart.js/auto';
 	import 'chartjs-adapter-date-fns';
+	import { formatDistanceToNow } from 'date-fns';
 
 	export let data: PageData;
 
@@ -118,13 +119,15 @@
 		<CardHeader><CardTitle>Latest Uploads</CardTitle></CardHeader>
 		<CardBody>
 			<CardText>
-				<Table hover responsive>
+				<Table hover striped bordered responsive>
 					<thead>
-						<th>Image</th>
-						<th>Item</th>
-						<th>World</th>
-						<th>Date</th>
-						<th>Upload Type</th>
+						<tr>
+							<th>Image</th>
+							<th>Item</th>
+							<th>World</th>
+							<th>When</th>
+							<th>Upload Type</th>
+						</tr>
 					</thead>
 					<tbody>
 						{#each data.last_uploads as upload}
@@ -132,7 +135,7 @@
 								<td><img alt={`${upload.item_id} Icon`} src={xivApi.apiBase(upload.icon)} /></td>
 								<td><a class="text-decoration-none fw-bold " href={`/item/${upload.item_id}`}>{upload.name}</a></td>
 								<td>{xivApi.getServer(upload.world_id).name}</td>
-								<td>{new Date(upload.upload_time).toLocaleString()}</td>
+								<td>{formatDistanceToNow(new Date(upload.upload_time))} ago</td>
 								<td>{upload.upload_type == 0 ? 'Listings' : 'Purchases'}</td>
 							</tr>
 						{/each}

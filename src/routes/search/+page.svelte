@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { hubApi, xivApi } from '$lib/api';
+	import Paginate from '$lib/components/Paginate.svelte';
 	import {
 		Button,
 		Card,
@@ -51,13 +52,9 @@
 					<Button color="primary" on:click={onSearch}>Search</Button>
 				</Form>
 
-				<Pagination class="mt-2">
-					{#each { length: data.items.total_pages + 1 } as _, i}
-						<PaginationItem active={page == i}>
-							<PaginationLink on:click={() => (page = i)}>{i + 1}</PaginationLink>
-						</PaginationItem>
-					{/each}
-				</Pagination>
+				<div class="d-flex justify-content-center">
+					<Paginate class="mt-2" total={data.items.total_pages} bind:page />
+				</div>
 
 				<Table hover responsive>
 					<thead>

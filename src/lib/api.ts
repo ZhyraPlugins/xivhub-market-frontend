@@ -100,6 +100,11 @@ export interface ListItemsReponse {
 	total_pages: number;
 }
 
+export interface WorldUpload {
+	world_id: number;
+	upload_time: string;
+}
+
 export class HubApi {
 	getUrl(path: string) {
 		return `${PUBLIC_MARKET_API}${path}`;
@@ -119,6 +124,12 @@ export class HubApi {
 
 	async purchases(fetch: Fetch, item_id: number, page?: number): Promise<PurchasesResponse> {
 		const res = await fetch(this.getUrl(`/item/${item_id}/purchases?page=${page ?? 0}`));
+
+		return await res.json();
+	}
+
+	async item_uploads(fetch: Fetch, item_id: number): Promise<WorldUpload[]> {
+		const res = await fetch(this.getUrl(`/item/${item_id}/uploads`));
 
 		return await res.json();
 	}

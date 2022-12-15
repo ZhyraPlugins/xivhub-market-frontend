@@ -4,9 +4,8 @@
 	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Row, Spinner, TabContent, Table, TabPane } from 'sveltestrap';
 	import type { PageData } from './$types';
 	import { formatDistanceToNow } from 'date-fns';
-	import { Line } from 'svelte-chartjs';
-	import 'chart.js/auto';
-	import 'chartjs-adapter-date-fns';
+	import LineGraph from '$lib/LineGraph.svelte';
+	import ListingTable from '$lib/components/ListingTable.svelte';
 
 	export let data: PageData;
 	export let item: XivItemInfo = data.listings.item;
@@ -107,7 +106,6 @@
 	let datacenterTab: number | string = 0;
 	let worldTab: number | string = 0;
 
-	// On the backend, purchases are ordered by
 	let reversedGlobalNQPurchases = globalnqPurchases.slice(0).reverse();
 	let purchasesData = {
 		labels: reversedGlobalNQPurchases.map((x) => new Date(x.purchase_time)),
@@ -133,6 +131,12 @@
 			}
 		]
 	};
+
+	let lastUpdated: Map<string, Date> = new Map();
+
+	for (let up of data.item_uploads) {
+		lastUpdated.set(xivApi.getServer(up.world_id)!.name, new Date(up.upload_time));
+	}
 </script>
 
 <svelte:head>
@@ -188,28 +192,7 @@
 				<Card>
 					<CardBody>
 						<CardText class="text-center">
-							<Line
-								data={purchasesData}
-								options={{
-									responsive: true,
-									interaction: {
-										mode: 'nearest',
-										axis: 'x',
-										intersect: false
-									},
-									scales: {
-										x: {
-											type: 'time',
-											ticks: {
-												source: 'auto',
-												// Disabled rotation for performance
-												maxRotation: 0,
-												autoSkip: true
-											}
-										}
-									}
-								}}
-							/>
+							<LineGraph data={purchasesData} />
 						</CardText>
 					</CardBody>
 				</Card>
@@ -218,28 +201,7 @@
 				<Card>
 					<CardBody>
 						<CardText class="text-center">
-							<Line
-								data={purchasesHQData}
-								options={{
-									responsive: true,
-									interaction: {
-										mode: 'nearest',
-										axis: 'x',
-										intersect: false
-									},
-									scales: {
-										x: {
-											type: 'time',
-											ticks: {
-												source: 'auto',
-												// Disabled rotation for performance
-												maxRotation: 0,
-												autoSkip: true
-											}
-										}
-									}
-								}}
-							/>
+							<LineGraph data={purchasesHQData} />
 						</CardText>
 					</CardBody>
 				</Card>
@@ -277,7 +239,9 @@
 											{@const nqListings = listings.filter((x) => !x.hq)}
 											<TabPane id={`world-${i}-${ii}`} tabId={ii} active={worldTab == ii}>
 												<span slot="tab">
-													{world_name}
+													<span>{world_name}</span>
+													<br />
+													<span class="text-muted fst-italic">{formatDistanceToNow(lastUpdated.get(world_name))} ago</span>
 												</span>
 												{#if cheapestHQListingPerDatacenter.has(datacenter)}
 													{@const cheapest = cheapestHQListingPerDatacenter.get(datacenter)}
@@ -295,44 +259,10 @@
 												{/if}
 
 												<h4 class="mt-2">HQ Listings</h4>
-												<Table hover responsive class="mt-2">
-													<thead>
-														<th>Price per unit</th>
-														<th>Quantity</th>
-														<th>Total</th>
-														<th>Last Review</th>
-													</thead>
-													<tbody>
-														{#each hqListings as listing}
-															<tr>
-																<td>{numberWithCommas(listing.price_per_unit)}</td>
-																<td>{listing.quantity}</td>
-																<td>{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
-																<td>{new Date(listing.last_review_time).toLocaleString()}</td>
-															</tr>
-														{/each}
-													</tbody>
-												</Table>
+												<ListingTable listings={hqListings} />
 
 												<h4 class="mt-2">NQ Listings</h4>
-												<Table hover responsive class="mt-2">
-													<thead>
-														<th>Price per unit</th>
-														<th>Quantity</th>
-														<th>Total</th>
-														<th>Last Review</th>
-													</thead>
-													<tbody>
-														{#each nqListings as listing}
-															<tr>
-																<td>{numberWithCommas(listing.price_per_unit)}</td>
-																<td>{listing.quantity}</td>
-																<td>{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
-																<td>{new Date(listing.last_review_time).toLocaleString()}</td>
-															</tr>
-														{/each}
-													</tbody>
-												</Table>
+												<ListingTable listings={nqListings} />
 											</TabPane>
 										{/each}
 									</TabContent>
@@ -378,7 +308,9 @@
 											)}
 											<TabPane id={`world-${i}-${ii}`} tabId={ii} active={worldTab == ii}>
 												<span slot="tab">
-													{world_name}
+													<span>{world_name}</span>
+													<br />
+													<span class="text-muted fst-italic">{formatDistanceToNow(lastUpdated.get(world_name))} ago</span>
 												</span>
 
 												<ul class="mt-2">
@@ -386,13 +318,15 @@
 													<li>Average NQ Price: {numberWithCommas(averageNqPriceUnit)}</li>
 												</ul>
 
-												<Table hover responsive class="mt-2">
+												<Table hover striped bordered responsive>
 													<thead>
-														<th>Price per unit</th>
-														<th>Quantity</th>
-														<th>Total</th>
-														<th>HQ</th>
-														<th>Purchased At</th>
+														<tr>
+															<th>Price per unit</th>
+															<th>Quantity</th>
+															<th>Total</th>
+															<th>HQ</th>
+															<th>Purchased</th>
+														</tr>
 													</thead>
 													<tbody>
 														{#each listings as listing}
@@ -401,7 +335,7 @@
 																<td>{listing.quantity}</td>
 																<td>{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
 																<td>{listing.hq.toString()}</td>
-																<td>{new Date(listing.purchase_time).toLocaleString()}</td>
+																<td>{formatDistanceToNow(new Date(listing.purchase_time))} ago</td>
 															</tr>
 														{/each}
 													</tbody>
