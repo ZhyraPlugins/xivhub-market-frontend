@@ -1,6 +1,6 @@
 import { PUBLIC_MARKET_API } from '$env/static/public';
 //import { PUBLIC_XIVAPI_KEY } from '$env/static/public';
-import Servers from '../servers.json';
+import Servers from '../worlds.json';
 import qs from 'query-string';
 
 export interface Upload {

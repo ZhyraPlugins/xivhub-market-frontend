@@ -20,8 +20,6 @@
 				type: 'time',
 				ticks: {
 					source: 'auto',
-					// Disabled rotation for performance
-					maxRotation: 0,
 					autoSkip: true
 				}
 			}

@@ -1,30 +1,36 @@
 <script lang="ts">
 	import { xivApi, type Listing, type Purchase, type XivItemInfo } from '$lib/api';
 	import { numberWithCommas } from '$lib/util';
-	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Row, Spinner, TabContent, Table, TabPane } from 'sveltestrap';
+	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Nav, NavItem, NavLink, Row } from 'sveltestrap';
 	import type { PageData } from './$types';
-	import { formatDistanceToNow } from 'date-fns';
+	import { formatDistanceToNowStrict } from 'date-fns';
 	import LineGraph from '$lib/LineGraph.svelte';
 	import ListingTable from '$lib/components/ListingTable.svelte';
+	import { DataCenters } from '$lib/datacenters';
+	import PurchasesTable from '$lib/components/PurchasesTable.svelte';
+	import { onMount } from 'svelte';
 
 	export let data: PageData;
 	export let item: XivItemInfo = data.listings.item;
+	let selectedDatacenter = 7;
+	let selectedWorld = -1;
+	let selectedWorldId = -1;
 
-	// Map -> datacenter -> world -> listings
+	onMount(() => {
+		selectedDatacenter = parseInt(localStorage.getItem('default-dc') ?? '7');
+	});
+
+	// world -> listings
+	export const listingsWorlds: Map<string, Listing[]> = new Map();
+	// datacenter -> world -> listings
 	export const listingsServers: Map<number, Map<string, Listing[]>> = new Map();
 	export const purchasesServers: Map<number, Map<string, Purchase[]>> = new Map();
 
+	export const listingsDataCenter: Map<number, Listing[]> = new Map();
+	export const purchasesDataCenter: Map<number, Purchase[]> = new Map();
+
 	export const cheapestNQListingPerDatacenter: Map<number, Listing> = new Map();
 	export const cheapestHQListingPerDatacenter: Map<number, Listing> = new Map();
-
-	let globalhqPurchases = data.purchases.purchases.filter((x) => x.hq);
-	export const globalAverageHqPrice = Math.round(
-		globalhqPurchases.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / globalhqPurchases.length
-	);
-	let globalnqPurchases = data.purchases.purchases.filter((x) => !x.hq);
-	export const globalAverageNqPrice = Math.round(
-		globalnqPurchases.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / globalnqPurchases.length
-	);
 
 	// Put the listings inside each datacenter, world
 	for (let listing of data.listings.listings) {
@@ -68,6 +74,15 @@
 		}
 
 		listings.push(listing);
+
+		let datacenterListings = listingsDataCenter.get(world.datacenter);
+
+		if (!datacenterListings) {
+			datacenterListings = [];
+			listingsDataCenter.set(world.datacenter, datacenterListings);
+		}
+
+		datacenterListings.push(listing);
 	}
 
 	for (let purchase of data.purchases.purchases) {
@@ -87,6 +102,28 @@
 		}
 
 		purchases.push(purchase);
+
+		let datacenterPurchases = purchasesDataCenter.get(world.datacenter);
+
+		if (!datacenterPurchases) {
+			datacenterPurchases = [];
+			purchasesDataCenter.set(world.datacenter, datacenterPurchases);
+		}
+
+		datacenterPurchases.push(purchase);
+	}
+
+	// Sort datacenterListings
+	for (let [_datacenter, listings] of listingsDataCenter) {
+		listings.sort((a, b) => {
+			if (a.price_per_unit < b.price_per_unit) {
+				return -1;
+			}
+			if (a.price_per_unit > b.price_per_unit) {
+				return 1;
+			}
+			return 0;
+		});
 	}
 
 	export const datacenterNames: Record<number, string> = {
@@ -103,8 +140,14 @@
 		11: 'Dynamis'
 	};
 
-	let datacenterTab: number | string = 0;
-	let worldTab: number | string = 0;
+	let globalhqPurchases = data.purchases.purchases.filter((x) => x.hq);
+	export const globalAverageHqPrice = Math.round(
+		globalhqPurchases.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / globalhqPurchases.length
+	);
+	let globalnqPurchases = data.purchases.purchases.filter((x) => !x.hq);
+	export const globalAverageNqPrice = Math.round(
+		globalnqPurchases.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / globalnqPurchases.length
+	);
 
 	let reversedGlobalNQPurchases = globalnqPurchases.slice(0).reverse();
 	let purchasesData = {
@@ -133,9 +176,22 @@
 	};
 
 	let lastUpdated: Map<string, Date> = new Map();
+	let lastUpdatedDatacenter: Map<number, Date> = new Map();
 
 	for (let up of data.item_uploads) {
-		lastUpdated.set(xivApi.getServer(up.world_id)!.name, new Date(up.upload_time));
+		let world = xivApi.getServer(up.world_id);
+		lastUpdated.set(world.name, new Date(up.upload_time));
+
+		if (!lastUpdatedDatacenter.has(world.datacenter)) {
+			lastUpdatedDatacenter.set(world.datacenter, new Date(up.upload_time));
+		} else {
+			let prev = lastUpdatedDatacenter.get(world.datacenter)!;
+			let cur = new Date(up.upload_time);
+
+			if (cur > prev) {
+				lastUpdatedDatacenter.set(world.datacenter, cur);
+			}
+		}
 	}
 </script>
 
@@ -156,9 +212,9 @@
 	<Container>
 		<Row>
 			<Col>
-				<Card class="mt-3">
+				<Card>
 					<CardHeader>
-						<CardTitle>{item.name}</CardTitle>
+						<CardTitle>{item.name} <span class="text-muted fs-6">{item.item_kind_name}</span></CardTitle>
 					</CardHeader>
 					<CardBody>
 						<CardText>
@@ -168,17 +224,8 @@
 									<img alt="Item Category Icon" class="mt-2" src={xivApi.apiBase(item.item_search_category_iconhd)} />
 								</Col>
 								<Col>
-									<ul>
-										<li><b>Item Kind</b>: {item.item_kind_name}</li>
-										<li>
-											<b>Global Average HQ price</b>: {numberWithCommas(globalAverageHqPrice)}
-										</li>
-										<li>
-											<b>Global Average NQ price</b>: {numberWithCommas(globalAverageNqPrice)}
-										</li>
-									</ul>
 									<p style="white-space: pre-line">
-										{item.description.replace(/[\n]+/g, '\n')}
+										{item.description.replace(/[\n]+/g, '\n').replace(/(<([^>]+)>)/gi, '')}
 									</p>
 								</Col>
 							</Row>
@@ -187,22 +234,116 @@
 				</Card>
 			</Col>
 		</Row>
-		<Row class="mt-2">
+
+		<Row>
 			<Col>
-				<Card>
+				<Card class="mt-2">
 					<CardBody>
-						<CardText class="text-center">
-							<LineGraph data={purchasesData} />
-						</CardText>
+						<Nav pills class="text-center d-flex justify-content-center">
+							{#each Object.entries(DataCenters) as [datacenterIdStr, datacenter]}
+								{@const datacenterId = parseInt(datacenterIdStr)}
+								{@const lastUploadDate = lastUpdatedDatacenter.get(parseInt(datacenterIdStr)) ?? 'unknown'}
+								<NavItem id={datacenterIdStr}>
+									<NavLink
+										class="fw-bold"
+										active={selectedDatacenter == datacenterId}
+										on:click={() => {
+											selectedDatacenter = datacenterId;
+											localStorage.setItem('default-dc', datacenterId);
+											selectedWorld = -1;
+										}}
+									>
+										<span>{datacenter.name}</span>
+										<br />
+										<span class="fst-italic fw-normal">
+											{#if lastUploadDate === 'unknown'}
+												{lastUploadDate}
+											{:else}
+												{formatDistanceToNowStrict(lastUploadDate)} ago
+											{/if}
+										</span>
+									</NavLink>
+								</NavItem>
+							{/each}
+						</Nav>
 					</CardBody>
 				</Card>
 			</Col>
+		</Row>
+
+		<Row>
 			<Col>
-				<Card>
+				<Card class="mt-2">
 					<CardBody>
-						<CardText class="text-center">
-							<LineGraph data={purchasesHQData} />
-						</CardText>
+						<Nav pills class="text-center d-flex justify-content-center">
+							<NavItem>
+								<NavLink
+									class="fw-bold"
+									active={selectedWorld == -1}
+									on:click={() => {
+										selectedWorld = -1;
+										selectedWorldId = -1;
+									}}
+								>
+									{@const lastUploadDate = lastUpdatedDatacenter.get(selectedDatacenter) ?? 'unknown'}
+									<span>All</span>
+									<br />
+									<span class="fst-italic fw-normal">
+										{#if lastUploadDate === 'unknown'}
+											{lastUploadDate}
+										{:else}
+											{formatDistanceToNowStrict(lastUploadDate)} ago
+										{/if}
+									</span>
+								</NavLink>
+							</NavItem>
+							{#each Object.entries(DataCenters[selectedDatacenter].worlds) as [worldId, worldName], i}
+								{@const lastUploadDate = lastUpdated.get(worldName) ?? 'unknown'}
+								<NavItem>
+									<NavLink
+										class="fw-bold"
+										active={selectedWorld == i}
+										on:click={() => {
+											selectedWorld = i;
+											selectedWorldId = parseInt(worldId);
+										}}
+									>
+										<span>{worldName}</span>
+										<br />
+										<span class="fst-italic fw-normal">
+											{#if lastUploadDate === 'unknown'}
+												{lastUploadDate}
+											{:else}
+												{formatDistanceToNowStrict(lastUploadDate)} ago
+											{/if}
+										</span>
+									</NavLink>
+								</NavItem>
+							{/each}
+						</Nav>
+
+						<Row class="d-flex justify-content-center text-center">
+							{#if cheapestHQListingPerDatacenter.has(selectedDatacenter)}
+								<Col>
+									{@const cheapest = cheapestHQListingPerDatacenter.get(selectedDatacenter)}
+									<span>
+										Cheapest HQ at
+										<b>{xivApi.getServer(cheapest?.world_id).name}</b>:
+										<b>{cheapest?.quantity} x {numberWithCommas(cheapest?.price_per_unit)}</b>
+									</span>
+								</Col>
+							{/if}
+							{#if cheapestNQListingPerDatacenter.has(selectedDatacenter)}
+								<Col>
+									{@const cheapest = cheapestNQListingPerDatacenter.get(selectedDatacenter)}
+									<span>
+										Cheapest NQ at
+										<b>{xivApi.getServer(cheapest?.world_id).name}</b>:
+										<b>{cheapest?.quantity} x {numberWithCommas(cheapest?.price_per_unit)}</b>
+									</span>
+								</Col>
+							{/if}
+						</Row>
 					</CardBody>
 				</Card>
 			</Col>
@@ -212,140 +353,105 @@
 	<Row>
 		<Col>
 			<Card class="mt-3">
-				<CardHeader><CardTitle>Listings</CardTitle></CardHeader>
 				<CardBody>
 					<CardText>
-						<TabContent
-							vertical
-							pills
-							on:tab={(e) => {
-								worldTab = 0;
-								datacenterTab = e.detail;
-							}}
-						>
-							{#each Array.from(listingsServers.entries()) as [datacenter, worlds], i}
-								{@const dataCenterName = datacenterNames[datacenter] ?? datacenter}
-								<TabPane id={`datacenter-${i}`} tabId={i} active={datacenterTab == i} class="w-100">
-									<span slot="tab">
-										{dataCenterName}
-									</span>
-									<TabContent
-										on:tab={(e) => {
-											worldTab = e.detail;
-										}}
-									>
-										{#each Array.from(worlds.entries()) as [world_name, listings], ii}
-											{@const hqListings = listings.filter((x) => x.hq)}
-											{@const nqListings = listings.filter((x) => !x.hq)}
-											<TabPane id={`world-${i}-${ii}`} tabId={ii} active={worldTab == ii}>
-												<span slot="tab">
-													<span>{world_name}</span>
-													<br />
-													<span class="text-muted fst-italic">{formatDistanceToNow(lastUpdated.get(world_name))} ago</span>
-												</span>
-												{#if cheapestHQListingPerDatacenter.has(datacenter)}
-													{@const cheapest = cheapestHQListingPerDatacenter.get(datacenter)}
-													<p class="mb-0">
-														Cheapest HQ on <b>{dataCenterName}</b> at
-														<b>{xivApi.getServer(cheapest?.world_id).name}</b> for <b>{numberWithCommas(cheapest?.price_per_unit)}</b>
-													</p>
-												{/if}
-												{#if cheapestNQListingPerDatacenter.has(datacenter)}
-													{@const cheapest = cheapestNQListingPerDatacenter.get(datacenter)}
-													<p class="mt-0">
-														Cheapest NQ on <b>{dataCenterName}</b> at
-														<b>{xivApi.getServer(cheapest?.world_id).name}</b> for <b>{numberWithCommas(cheapest?.price_per_unit)}</b>
-													</p>
-												{/if}
+						<Row>
+							<Col>
+								{#if selectedWorldId == -1}
+									{@const listings = listingsDataCenter.get(selectedDatacenter) ?? []}
+									{@const hqListings = listings?.filter((x) => x.hq)}
+									{@const nqListings = listings?.filter((x) => !x.hq)}
+									{#if listings !== undefined}
+										<h4 class="mt-2">HQ Listings</h4>
+										<ListingTable listings={hqListings} withServer />
 
-												<h4 class="mt-2">HQ Listings</h4>
-												<ListingTable listings={hqListings} />
+										<h4 class="mt-2">NQ Listings</h4>
+										<ListingTable listings={nqListings} withServer />
+									{/if}
+								{:else}
+									{@const worldName = xivApi.getServer(selectedWorldId).name}
 
-												<h4 class="mt-2">NQ Listings</h4>
-												<ListingTable listings={nqListings} />
-											</TabPane>
-										{/each}
-									</TabContent>
-								</TabPane>
-							{/each}
-						</TabContent>
+									{@const listings = listingsServers.get(selectedDatacenter)?.get(worldName)}
+									{@const hqListings = listings?.filter((x) => x.hq)}
+									{@const nqListings = listings?.filter((x) => !x.hq)}
+									{#if listings !== undefined}
+										<h4 class="mt-2">HQ Listings</h4>
+										<ListingTable listings={hqListings} />
+
+										<h4 class="mt-2">NQ Listings</h4>
+										<ListingTable listings={nqListings} />
+									{/if}
+								{/if}
+							</Col>
+							<Col>
+								<h4 class="mt-2">Purchases</h4>
+								{#if selectedWorldId == -1}
+									{@const listings = purchasesDataCenter.get(selectedDatacenter) ?? []}
+									{@const hqListings = listings?.filter((x) => x.hq)}
+									{@const nqListings = listings?.filter((x) => !x.hq)}
+									{@const averageNqPriceUnit = Math.round(
+										nqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / nqListings.length
+									)}
+									{@const averageHqPriceUnit = Math.round(
+										hqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / hqListings.length
+									)}
+									<ul class="mt-2">
+										<li>Average HQ Price: {numberWithCommas(averageHqPriceUnit)}</li>
+										<li>Average NQ Price: {numberWithCommas(averageNqPriceUnit)}</li>
+									</ul>
+
+									<PurchasesTable purchases={listings} withServer />
+								{:else}
+									{@const worldName = xivApi.getServer(selectedWorldId).name}
+
+									{@const listings = purchasesServers.get(selectedDatacenter)?.get(worldName)}
+									{@const hqListings = listings?.filter((x) => x.hq)}
+									{@const nqListings = listings?.filter((x) => !x.hq)}
+									{#if listings !== undefined}
+										{@const averageNqPriceUnit = Math.round(
+											nqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / nqListings.length
+										)}
+										{@const averageHqPriceUnit = Math.round(
+											hqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / hqListings.length
+										)}
+										<ul class="mt-2">
+											<li>Average HQ Price: {numberWithCommas(averageHqPriceUnit)}</li>
+											<li>Average NQ Price: {numberWithCommas(averageNqPriceUnit)}</li>
+										</ul>
+
+										<PurchasesTable purchases={listings} />
+									{/if}
+								{/if}
+							</Col>
+						</Row>
 					</CardText>
 				</CardBody>
 			</Card>
 		</Col>
+	</Row>
+
+	<Row class="mt-2">
 		<Col>
-			<Card class="mt-3">
-				<CardHeader><CardTitle>Purchases</CardTitle></CardHeader>
+			<Card>
+				<CardHeader>
+					<CardTitle>NQ Purchase History</CardTitle>
+				</CardHeader>
 				<CardBody>
-					<CardText>
-						<TabContent
-							vertical
-							pills
-							on:tab={(e) => {
-								worldTab = 0;
-								datacenterTab = e.detail;
-							}}
-						>
-							{#each Array.from(purchasesServers.entries()) as [datacenter, worlds], i}
-								<TabPane id={`datacenter-${i}`} tabId={i} active={datacenterTab == i} class="w-100">
-									<span slot="tab">
-										{datacenterNames[datacenter] ?? datacenter}
-									</span>
+					<CardText class="text-center">
+						<LineGraph data={purchasesData} />
+					</CardText>
+				</CardBody>
+			</Card>
+		</Col>
 
-									<TabContent
-										on:tab={(e) => {
-											worldTab = e.detail;
-										}}
-									>
-										{#each Array.from(worlds.entries()) as [world_name, listings], ii}
-											{@const nqListings = listings.filter((x) => !x.hq)}
-											{@const averageNqPriceUnit = Math.round(
-												nqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / nqListings.length
-											)}
-											{@const hqListings = listings.filter((x) => x.hq)}
-											{@const averageHqPriceUnit = Math.round(
-												hqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / hqListings.length
-											)}
-											<TabPane id={`world-${i}-${ii}`} tabId={ii} active={worldTab == ii}>
-												<span slot="tab">
-													<span>{world_name}</span>
-													<br />
-													<span class="text-muted fst-italic">{formatDistanceToNow(lastUpdated.get(world_name))} ago</span>
-												</span>
-
-												<ul class="mt-2">
-													<li>Average HQ Price: {numberWithCommas(averageHqPriceUnit)}</li>
-													<li>Average NQ Price: {numberWithCommas(averageNqPriceUnit)}</li>
-												</ul>
-
-												<Table hover striped bordered responsive>
-													<thead>
-														<tr>
-															<th>Price per unit</th>
-															<th>Quantity</th>
-															<th>Total</th>
-															<th>HQ</th>
-															<th>Purchased</th>
-														</tr>
-													</thead>
-													<tbody>
-														{#each listings as listing}
-															<tr>
-																<td>{numberWithCommas(listing.price_per_unit)}</td>
-																<td>{listing.quantity}</td>
-																<td>{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
-																<td>{listing.hq.toString()}</td>
-																<td>{formatDistanceToNow(new Date(listing.purchase_time))} ago</td>
-															</tr>
-														{/each}
-													</tbody>
-												</Table>
-											</TabPane>
-										{/each}
-									</TabContent>
-								</TabPane>
-							{/each}
-						</TabContent>
+		<Col>
+			<Card>
+				<CardHeader>
+					<CardTitle>HQ Purchase History</CardTitle>
+				</CardHeader>
+				<CardBody>
+					<CardText class="text-center">
+						<LineGraph data={purchasesHQData} />
 					</CardText>
 				</CardBody>
 			</Card>

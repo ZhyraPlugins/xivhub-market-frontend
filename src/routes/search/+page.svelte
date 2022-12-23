@@ -1,25 +1,7 @@
 <script lang="ts">
-	import { hubApi, xivApi } from '$lib/api';
+	import { hubApi } from '$lib/api';
 	import Paginate from '$lib/components/Paginate.svelte';
-	import {
-		Button,
-		Card,
-		CardBody,
-		CardHeader,
-		CardText,
-		CardTitle,
-		Col,
-		Container,
-		Form,
-		FormGroup,
-		Input,
-		Label,
-		Pagination,
-		PaginationItem,
-		PaginationLink,
-		Row,
-		Table
-	} from 'sveltestrap';
+	import { Button, Card, CardBody, CardHeader, CardText, CardTitle, Container, Form, FormGroup, Input, Table } from 'sveltestrap';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
