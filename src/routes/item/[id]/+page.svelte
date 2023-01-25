@@ -205,7 +205,7 @@
 		]
 	};
 
-	$: reversedPurchasesHQ = globalhqPurchases.slice(0).reverse();
+	$: reversedPurchasesHQ = purchasesHQ.slice(0).reverse();
 	$: purchasesHQData = {
 		labels: reversedPurchasesHQ.map((x) => new Date(x.purchase_time)),
 		datasets: [
