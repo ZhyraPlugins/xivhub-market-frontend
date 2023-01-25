@@ -30,9 +30,9 @@
 				{#if withServer}
 					<td>{xivApi.getServer(purchase.world_id).name}</td>
 				{/if}
-				<td class="text-primary fw-bold">{numberWithCommas(purchase.price_per_unit)}</td>
-				<td class="text-danger fw-bold">{purchase.quantity}</td>
-				<td class="text-success fw-bold">{numberWithCommas(purchase.quantity * purchase.price_per_unit)}</td>
+				<td class="text-primary fw-bold text-end">{numberWithCommas(purchase.price_per_unit)}</td>
+				<td class="text-danger fw-bold text-end">{purchase.quantity}</td>
+				<td class="text-success fw-bold text-end">{numberWithCommas(purchase.quantity * purchase.price_per_unit)}</td>
 				<td>{purchase.hq ? 'Yes' : 'No'}</td>
 				<td>{purchase.buyer_name}</td>
 				<td>{formatDistanceToNowStrict(new Date(purchase.purchase_time))} ago</td>

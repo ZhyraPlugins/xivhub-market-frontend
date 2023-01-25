@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { xivApi, type Listing, type Purchase, type XivItemInfo } from '$lib/api';
-	import { numberWithCommas } from '$lib/util';
+	import { floatWithCommas, numberWithCommas } from '$lib/util';
 	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Nav, NavItem, NavLink, Row } from 'sveltestrap';
 	import type { PageData } from './$types';
 	import { formatDistanceToNowStrict } from 'date-fns';
@@ -149,32 +149,6 @@
 		globalnqPurchases.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / globalnqPurchases.length
 	);
 
-	let reversedGlobalNQPurchases = globalnqPurchases.slice(0).reverse();
-	let purchasesData = {
-		labels: reversedGlobalNQPurchases.map((x) => new Date(x.purchase_time)),
-		datasets: [
-			{
-				label: 'Price per unit NQ',
-				data: reversedGlobalNQPurchases.map((x) => x.price_per_unit),
-				borderWidth: 2,
-				fill: 'origin'
-			}
-		]
-	};
-
-	let reversedGlobalHQPurchases = globalhqPurchases.slice(0).reverse();
-	let purchasesHQData = {
-		labels: reversedGlobalHQPurchases.map((x) => new Date(x.purchase_time)),
-		datasets: [
-			{
-				label: 'Price per unit HQ',
-				data: reversedGlobalHQPurchases.map((x) => x.price_per_unit),
-				borderWidth: 2,
-				fill: 'origin'
-			}
-		]
-	};
-
 	let lastUpdated: Map<string, Date> = new Map();
 	let lastUpdatedDatacenter: Map<number, Date> = new Map();
 
@@ -193,6 +167,56 @@
 			}
 		}
 	}
+
+	// Select world / datacenter listings, purchases.
+	let selectedWorldName: string;
+	$: selectedWorldName = selectedWorldId == -1 ? datacenterNames[selectedDatacenter] : xivApi.getServer(selectedWorldId).name;
+	let listings: Listing[];
+	$: listings =
+		selectedWorldId == -1
+			? listingsDataCenter.get(selectedDatacenter) ?? []
+			: listingsServers.get(selectedDatacenter)?.get(selectedWorldName) ?? [];
+	$: listingsNQ = listings.filter((x) => !x.hq);
+	$: listingsHQ = listings.filter((x) => x.hq);
+	$: averageListingsNQPrice = Math.round(listingsNQ.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / listingsNQ.length);
+	$: averageListingsHQPrice = Math.round(listingsHQ.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / listingsHQ.length);
+
+	let purchases: Purchase[];
+	$: purchases =
+		selectedWorldId == -1
+			? purchasesDataCenter.get(selectedDatacenter) ?? []
+			: purchasesServers.get(selectedDatacenter)?.get(selectedWorldName) ?? [];
+	$: purchasesNQ = purchases.filter((x) => !x.hq);
+	$: purchasesHQ = purchases.filter((x) => x.hq);
+	$: averagePurchaseNQPrice = Math.round(purchasesNQ.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / purchasesNQ.length);
+	$: averagePurchaseHQPrice = Math.round(purchasesHQ.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / purchasesHQ.length);
+
+	// Plotting data
+	$: reversedPurchasesNQ = purchasesNQ.slice(0).reverse();
+	$: purchasesDataNQ = {
+		labels: reversedPurchasesNQ.map((x) => new Date(x.purchase_time)),
+		datasets: [
+			{
+				label: 'Price per unit NQ',
+				data: reversedPurchasesNQ.map((x) => x.price_per_unit),
+				borderWidth: 2,
+				fill: 'origin'
+			}
+		]
+	};
+
+	$: reversedPurchasesHQ = globalhqPurchases.slice(0).reverse();
+	$: purchasesHQData = {
+		labels: reversedPurchasesHQ.map((x) => new Date(x.purchase_time)),
+		datasets: [
+			{
+				label: 'Price per unit HQ',
+				data: reversedPurchasesHQ.map((x) => x.price_per_unit),
+				borderWidth: 2,
+				fill: 'origin'
+			}
+		]
+	};
 </script>
 
 <svelte:head>
@@ -361,80 +385,39 @@
 					<CardText>
 						<Row>
 							<Col>
-								{#if selectedWorldId == -1}
-									{@const listings = listingsDataCenter.get(selectedDatacenter) ?? []}
-									{@const hqListings = listings?.filter((x) => x.hq)}
-									{@const nqListings = listings?.filter((x) => !x.hq)}
-									{#if listings !== undefined}
-										<h4 class="mt-2">HQ Listings</h4>
-										<ListingTable listings={hqListings} withServer />
-
-										<h4 class="mt-2">NQ Listings</h4>
-										<ListingTable listings={nqListings} withServer />
+								<h4 class="mt-2">Listings</h4>
+								<ul class="mt-2">
+									{#if !isNaN(averageListingsHQPrice)}
+										<li>
+											Average Listing HQ Price: <b>{numberWithCommas(averageListingsHQPrice)}</b>
+											({((averageListingsHQPrice / averagePurchaseHQPrice) * 100).toFixed(2)}% of purchase average)
+										</li>
 									{/if}
-								{:else}
-									{@const worldName = xivApi.getServer(selectedWorldId).name}
-									{@const listings = listingsServers.get(selectedDatacenter)?.get(worldName)}
-									{@const hqListings = listings?.filter((x) => x.hq)}
-									{@const nqListings = listings?.filter((x) => !x.hq)}
-
-									{#if listings !== undefined}
-										{#if hqListings}
-											<h4 class="mt-2">HQ Listings</h4>
-											<ListingTable listings={hqListings} />
-										{/if}
-
-										{#if nqListings}
-											<h4 class="mt-2">NQ Listings</h4>
-											<ListingTable listings={nqListings} />
-										{/if}
+									{#if !isNaN(averageListingsNQPrice)}
+										<li>
+											Average Listing NQ Price: <b>{numberWithCommas(averageListingsNQPrice)}</b>
+											({((averageListingsNQPrice / averagePurchaseNQPrice) * 100).toFixed(2)}% of purchase average)
+										</li>
 									{/if}
-								{/if}
+								</ul>
+								<h4 class="mt-2">HQ Listings</h4>
+								<ListingTable listings={listingsHQ} withServer={selectedWorldId == -1} />
+
+								<h4 class="mt-2">NQ Listings</h4>
+								<ListingTable listings={listingsNQ} withServer={selectedWorldId == -1} />
 							</Col>
 							<Col>
 								<h4 class="mt-2">Purchases</h4>
-								{#if selectedWorldId == -1}
-									{@const listings = purchasesDataCenter.get(selectedDatacenter) ?? []}
-									{@const hqListings = listings?.filter((x) => x.hq)}
-									{@const nqListings = listings?.filter((x) => !x.hq)}
-									{@const averageNqPriceUnit = Math.round(
-										nqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / nqListings.length
-									)}
-									{@const averageHqPriceUnit = Math.round(
-										hqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / hqListings.length
-									)}
-									<ul class="mt-2">
-										<li>Average HQ Price: {numberWithCommas(averageHqPriceUnit)}</li>
-										<li>Average NQ Price: {numberWithCommas(averageNqPriceUnit)}</li>
-									</ul>
-
-									<PurchasesTable purchases={listings} withServer />
-								{:else}
-									{@const worldName = xivApi.getServer(selectedWorldId).name}
-
-									{@const listings = purchasesServers.get(selectedDatacenter)?.get(worldName)}
-									{@const hqListings = listings?.filter((x) => x.hq)}
-									{@const nqListings = listings?.filter((x) => !x.hq)}
-									{#if listings !== undefined}
-										<ul class="mt-2">
-											{#if hqListings}
-												{@const averageHqPriceUnit = Math.round(
-													hqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / hqListings.length
-												)}
-												<li>Average HQ Price: {numberWithCommas(averageHqPriceUnit)}</li>
-											{/if}
-
-											{#if nqListings}
-												{@const averageNqPriceUnit = Math.round(
-													nqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / nqListings.length
-												)}
-												<li>Average NQ Price: {numberWithCommas(averageNqPriceUnit)}</li>
-											{/if}
-										</ul>
-
-										<PurchasesTable purchases={listings} />
+								<ul class="mt-2">
+									{#if !isNaN(averagePurchaseHQPrice)}
+										<li>Average Purchase HQ Price: <b>{numberWithCommas(averagePurchaseHQPrice)}</b></li>
 									{/if}
-								{/if}
+									{#if !isNaN(averagePurchaseNQPrice)}
+										<li>Average Purchase NQ Price: <b>{numberWithCommas(averagePurchaseNQPrice)}</b></li>
+									{/if}
+								</ul>
+
+								<PurchasesTable {purchases} withServer={selectedWorldId == -1} />
 							</Col>
 						</Row>
 					</CardText>
@@ -451,7 +434,7 @@
 				</CardHeader>
 				<CardBody>
 					<CardText class="text-center">
-						<LineGraph data={purchasesData} />
+						<LineGraph data={purchasesDataNQ} />
 					</CardText>
 				</CardBody>
 			</Card>

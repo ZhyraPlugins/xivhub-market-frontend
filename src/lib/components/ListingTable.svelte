@@ -29,9 +29,9 @@
 				{#if withServer}
 					<td>{xivApi.getServer(listing.world_id).name}</td>
 				{/if}
-				<td class="text-primary fw-bold">{numberWithCommas(listing.price_per_unit)}</td>
-				<td class="text-danger fw-bold">{listing.quantity}</td>
-				<td class="text-success fw-bold">{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
+				<td class="text-primary fw-bold text-end">{numberWithCommas(listing.price_per_unit)}</td>
+				<td class="text-danger fw-bold text-end">{listing.quantity}</td>
+				<td class="text-success fw-bold text-end">{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
 				<td>{listing.materia_count}</td>
 				<td>{formatDistanceToNowStrict(new Date(listing.last_review_time))} ago</td>
 			</tr>
