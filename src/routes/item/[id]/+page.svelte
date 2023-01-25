@@ -401,10 +401,10 @@
 									{/if}
 								</ul>
 								<h4 class="mt-2">HQ Listings</h4>
-								<ListingTable listings={listingsHQ} withServer={selectedWorldId == -1} />
+								<ListingTable listings={listingsHQ} withServer={selectedWorldId == -1} average={averagePurchaseHQPrice} />
 
 								<h4 class="mt-2">NQ Listings</h4>
-								<ListingTable listings={listingsNQ} withServer={selectedWorldId == -1} />
+								<ListingTable listings={listingsNQ} withServer={selectedWorldId == -1} average={averagePurchaseNQPrice} />
 							</Col>
 							<Col>
 								<h4 class="mt-2">Purchases</h4>
