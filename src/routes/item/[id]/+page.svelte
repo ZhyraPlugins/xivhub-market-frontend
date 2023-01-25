@@ -249,7 +249,7 @@
 										active={selectedDatacenter == datacenterId}
 										on:click={() => {
 											selectedDatacenter = datacenterId;
-											localStorage.setItem('default-dc', datacenterId);
+											localStorage.setItem('default-dc', datacenterId.toString());
 											selectedWorld = -1;
 										}}
 									>
@@ -326,21 +326,25 @@
 							{#if cheapestHQListingPerDatacenter.has(selectedDatacenter)}
 								<Col>
 									{@const cheapest = cheapestHQListingPerDatacenter.get(selectedDatacenter)}
-									<span>
-										Cheapest HQ at
-										<b>{xivApi.getServer(cheapest?.world_id).name}</b>:
-										<b>{cheapest?.quantity} x {numberWithCommas(cheapest?.price_per_unit)}</b>
-									</span>
+									{#if cheapest}
+										<span>
+											Cheapest HQ at
+											<b>{xivApi.getServer(cheapest.world_id).name}</b>:
+											<b>{cheapest.quantity} x {numberWithCommas(cheapest.price_per_unit)}</b>
+										</span>
+									{/if}
 								</Col>
 							{/if}
 							{#if cheapestNQListingPerDatacenter.has(selectedDatacenter)}
 								<Col>
 									{@const cheapest = cheapestNQListingPerDatacenter.get(selectedDatacenter)}
-									<span>
-										Cheapest NQ at
-										<b>{xivApi.getServer(cheapest?.world_id).name}</b>:
-										<b>{cheapest?.quantity} x {numberWithCommas(cheapest?.price_per_unit)}</b>
-									</span>
+									{#if cheapest}
+										<span>
+											Cheapest NQ at
+											<b>{xivApi.getServer(cheapest.world_id).name}</b>:
+											<b>{cheapest.quantity} x {numberWithCommas(cheapest.price_per_unit)}</b>
+										</span>
+									{/if}
 								</Col>
 							{/if}
 						</Row>
@@ -370,16 +374,20 @@
 									{/if}
 								{:else}
 									{@const worldName = xivApi.getServer(selectedWorldId).name}
-
 									{@const listings = listingsServers.get(selectedDatacenter)?.get(worldName)}
 									{@const hqListings = listings?.filter((x) => x.hq)}
 									{@const nqListings = listings?.filter((x) => !x.hq)}
-									{#if listings !== undefined}
-										<h4 class="mt-2">HQ Listings</h4>
-										<ListingTable listings={hqListings} />
 
-										<h4 class="mt-2">NQ Listings</h4>
-										<ListingTable listings={nqListings} />
+									{#if listings !== undefined}
+										{#if hqListings}
+											<h4 class="mt-2">HQ Listings</h4>
+											<ListingTable listings={hqListings} />
+										{/if}
+
+										{#if nqListings}
+											<h4 class="mt-2">NQ Listings</h4>
+											<ListingTable listings={nqListings} />
+										{/if}
 									{/if}
 								{/if}
 							</Col>
@@ -408,15 +416,20 @@
 									{@const hqListings = listings?.filter((x) => x.hq)}
 									{@const nqListings = listings?.filter((x) => !x.hq)}
 									{#if listings !== undefined}
-										{@const averageNqPriceUnit = Math.round(
-											nqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / nqListings.length
-										)}
-										{@const averageHqPriceUnit = Math.round(
-											hqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / hqListings.length
-										)}
 										<ul class="mt-2">
-											<li>Average HQ Price: {numberWithCommas(averageHqPriceUnit)}</li>
-											<li>Average NQ Price: {numberWithCommas(averageNqPriceUnit)}</li>
+											{#if hqListings}
+												{@const averageHqPriceUnit = Math.round(
+													hqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / hqListings.length
+												)}
+												<li>Average HQ Price: {numberWithCommas(averageHqPriceUnit)}</li>
+											{/if}
+
+											{#if nqListings}
+												{@const averageNqPriceUnit = Math.round(
+													nqListings.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / nqListings.length
+												)}
+												<li>Average NQ Price: {numberWithCommas(averageNqPriceUnit)}</li>
+											{/if}
 										</ul>
 
 										<PurchasesTable purchases={listings} />

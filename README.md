@@ -8,7 +8,6 @@ A `.env` file with the following:
 
 ```
 PUBLIC_MARKET_API="https://market.xivhub.org/api"
-PUBLIC_XIVAPI_KEY="xivapi.com key"
 ```
 
 ## Developing

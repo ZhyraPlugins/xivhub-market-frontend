@@ -1,5 +1,4 @@
 import { PUBLIC_MARKET_API } from '$env/static/public';
-//import { PUBLIC_XIVAPI_KEY } from '$env/static/public';
 import Servers from '../worlds.json';
 import qs from 'query-string';
 
