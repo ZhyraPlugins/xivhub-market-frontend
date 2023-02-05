@@ -67,15 +67,25 @@
 
 <Container class="mt-2">
 	<hr />
-	<footer class="d-flex">
-		<Row class="w-100">
-			<Col xs={8}><p class="text-muted text-center">&copy; 2022 <a href="https://xivhub.org">xivhub.org</a></p></Col>
-			<Col xs={2}>
-				<ListGroup flush>
-					<ListGroupItem tag="a" href="https://discord.gg/GZK9aME8wN">Discord</ListGroupItem>
-					<ListGroupItem tag="a" href="https://twitter.com/XivHub">Twitter</ListGroupItem>
-				</ListGroup>
-			</Col>
-		</Row>
+	<footer class="d-flex w-100">
+		<Container>
+			<Row>
+				<Col xs={8}><p class="text-muted text-center">&copy; 2022 <a href="https://xivhub.org">xivhub.org</a></p></Col>
+				<Col xs={2}>
+					<ListGroup flush>
+						<ListGroupItem tag="a" href="https://discord.gg/GZK9aME8wN">Discord</ListGroupItem>
+						<ListGroupItem tag="a" href="https://twitter.com/XivHub">Twitter</ListGroupItem>
+					</ListGroup>
+				</Col>
+			</Row>
+			<Row>
+				<Col>
+					<p class="text-muted text-center">
+						Final Fantasy XIV © 2010-2023 SQUARE ENIX CO., LTD. All Rights Reserved. This site is not affiliated in any way with SQUARE ENIX
+						CO., LTD.
+					</p>
+				</Col>
+			</Row>
+		</Container>
 	</footer>
 </Container>
