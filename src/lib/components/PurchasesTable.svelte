@@ -11,9 +11,9 @@
 <Table hover striped bordered responsive>
 	<thead>
 		<tr>
-			<td>#</td>
+			<th>#</th>
 			{#if withServer}
-				<td>Server</td>
+				<th>Server</th>
 			{/if}
 			<th>Price per unit</th>
 			<th>Quantity</th>

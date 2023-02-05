@@ -1,7 +1,5 @@
-export function numberWithCommas(x: number) {
-	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-}
+import { format } from 'numerable';
 
-export function floatWithCommas(x: number) {
-	return x.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+export function numberWithCommas(x: number) {
+	return format(x, '0,0[.]00');
 }

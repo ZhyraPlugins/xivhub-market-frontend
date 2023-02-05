@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { xivApi, type Listing, type Purchase, type XivItemInfo } from '$lib/api';
-	import { floatWithCommas, numberWithCommas } from '$lib/util';
+	import { numberWithCommas } from '$lib/util';
 	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Nav, NavItem, NavLink, Row } from 'sveltestrap';
 	import type { PageData } from './$types';
 	import { formatDistanceToNowStrict } from 'date-fns';
@@ -9,6 +9,8 @@
 	import { DataCenters } from '$lib/datacenters';
 	import PurchasesTable from '$lib/components/PurchasesTable.svelte';
 	import { onMount } from 'svelte';
+	import { median, medianAbsoluteDeviation, mode, sampleSkewness, standardDeviation, variance } from 'simple-statistics';
+	import StatsTable from '$lib/components/StatsTable.svelte';
 
 	export let data: PageData;
 	export let item: XivItemInfo = data.listings.item;
@@ -178,8 +180,23 @@
 			: listingsServers.get(selectedDatacenter)?.get(selectedWorldName) ?? [];
 	$: listingsNQ = listings.filter((x) => !x.hq);
 	$: listingsHQ = listings.filter((x) => x.hq);
-	$: averageListingsNQPrice = Math.round(listingsNQ.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / listingsNQ.length);
-	$: averageListingsHQPrice = Math.round(listingsHQ.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / listingsHQ.length);
+	$: listingsNQPrices = listingsNQ.map((x) => x.price_per_unit);
+	$: listingsHQPrices = listingsHQ.map((x) => x.price_per_unit);
+	$: listingsNQQuantities = listingsNQ.map((x) => x.quantity);
+	$: listingsHQQuantities = listingsHQ.map((x) => x.quantity);
+	$: averageListingsNQPrice = Math.round(listingsNQPrices.reduce((a, b) => a + b, 0) / listingsNQ.length);
+	$: averageListingsHQPrice = Math.round(listingsHQPrices.reduce((a, b) => a + b, 0) / listingsHQ.length);
+	$: medianListingNQPrice = listingsNQ.length > 0 ? median(listingsNQPrices) : NaN;
+	$: medianListingHQPrice = listingsHQ.length > 0 ? median(listingsHQPrices) : NaN;
+	$: modeListingNQPrice = listingsNQ.length > 0 ? mode(listingsNQPrices) : NaN;
+	$: modeListingHQPrice = listingsHQ.length > 0 ? mode(listingsHQPrices) : NaN;
+
+	$: meanListingsNQQuantity = Math.round(listingsNQQuantities.reduce((a, b) => a + b, 0) / listingsNQ.length);
+	$: meanListingsHQQuantity = Math.round(listingsHQQuantities.reduce((a, b) => a + b, 0) / listingsHQ.length);
+	$: medianListingNQQuantity = listingsNQ.length > 0 ? median(listingsNQQuantities) : NaN;
+	$: medianListingHQQuantity = listingsHQ.length > 0 ? median(listingsHQQuantities) : NaN;
+	$: modeListingNQQuantity = listingsNQ.length > 0 ? mode(listingsNQQuantities) : NaN;
+	$: modeListingHQQuantity = listingsHQ.length > 0 ? mode(listingsHQQuantities) : NaN;
 
 	let purchases: Purchase[];
 	$: purchases =
@@ -188,8 +205,23 @@
 			: purchasesServers.get(selectedDatacenter)?.get(selectedWorldName) ?? [];
 	$: purchasesNQ = purchases.filter((x) => !x.hq);
 	$: purchasesHQ = purchases.filter((x) => x.hq);
-	$: averagePurchaseNQPrice = Math.round(purchasesNQ.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / purchasesNQ.length);
-	$: averagePurchaseHQPrice = Math.round(purchasesHQ.map((x) => x.price_per_unit).reduce((a, b) => a + b, 0) / purchasesHQ.length);
+	$: purchasesNQPrices = purchasesNQ.map((x) => x.price_per_unit);
+	$: purchasesHQPrices = purchasesHQ.map((x) => x.price_per_unit);
+	$: purchasesNQQuantities = purchasesNQ.map((x) => x.quantity);
+	$: purchasesHQQuantities = purchasesHQ.map((x) => x.quantity);
+	$: averagePurchaseNQPrice = Math.round(purchasesNQPrices.reduce((a, b) => a + b, 0) / purchasesNQ.length);
+	$: averagePurchaseHQPrice = Math.round(purchasesHQPrices.reduce((a, b) => a + b, 0) / purchasesHQ.length);
+	$: medianPurchaseNQPrice = purchasesNQ.length > 0 ? median(purchasesNQPrices) : NaN;
+	$: medianPurchaseHQPrice = purchasesHQ.length > 0 ? median(purchasesHQPrices) : NaN;
+	$: modePurchaseNQPrice = purchasesNQ.length > 0 ? mode(purchasesNQPrices) : NaN;
+	$: modePurchaseHQPrice = purchasesHQ.length > 0 ? mode(purchasesHQPrices) : NaN;
+
+	$: meanPurchaseNQQuantity = Math.round(purchasesNQQuantities.reduce((a, b) => a + b, 0) / listingsNQ.length);
+	$: meanPurchaseHQQuantity = Math.round(purchasesHQQuantities.reduce((a, b) => a + b, 0) / listingsHQ.length);
+	$: medianPurchaseNQQuantity = purchasesNQ.length > 0 ? median(purchasesNQQuantities) : NaN;
+	$: medianPurchaseHQQuantity = purchasesHQ.length > 0 ? median(purchasesHQQuantities) : NaN;
+	$: modePurchaseNQQuantity = purchasesNQ.length > 0 ? mode(purchasesNQQuantities) : NaN;
+	$: modePurchaseHQQuantity = purchasesHQ.length > 0 ? mode(purchasesHQQuantities) : NaN;
 
 	// Plotting data
 	$: reversedPurchasesNQ = purchasesNQ.slice(0).reverse();
@@ -354,7 +386,11 @@
 										<span>
 											Cheapest HQ at
 											<b>{xivApi.getServer(cheapest.world_id).name}</b>:
-											<b>{cheapest.quantity} x {numberWithCommas(cheapest.price_per_unit)}</b>
+											<b
+												>{cheapest.quantity} x {numberWithCommas(cheapest.price_per_unit)} = {numberWithCommas(
+													cheapest.quantity * cheapest.price_per_unit
+												)}</b
+											>
 										</span>
 									{/if}
 								</Col>
@@ -366,7 +402,11 @@
 										<span>
 											Cheapest NQ at
 											<b>{xivApi.getServer(cheapest.world_id).name}</b>:
-											<b>{cheapest.quantity} x {numberWithCommas(cheapest.price_per_unit)}</b>
+											<b
+												>{cheapest.quantity} x {numberWithCommas(cheapest.price_per_unit)} = {numberWithCommas(
+													cheapest.quantity * cheapest.price_per_unit
+												)}</b
+											>
 										</span>
 									{/if}
 								</Col>
@@ -386,36 +426,117 @@
 						<Row>
 							<Col>
 								<h4 class="mt-2">Listings</h4>
-								<ul class="mt-2">
-									{#if !isNaN(averageListingsHQPrice)}
-										<li>
-											Average Listing HQ Price: <b>{numberWithCommas(averageListingsHQPrice)}</b>
-											({((averageListingsHQPrice / averagePurchaseHQPrice) * 100).toFixed(2)}% of purchase average)
-										</li>
-									{/if}
-									{#if !isNaN(averageListingsNQPrice)}
-										<li>
-											Average Listing NQ Price: <b>{numberWithCommas(averageListingsNQPrice)}</b>
-											({((averageListingsNQPrice / averagePurchaseNQPrice) * 100).toFixed(2)}% of purchase average)
-										</li>
-									{/if}
-								</ul>
-								<h4 class="mt-2">HQ Listings</h4>
-								<ListingTable listings={listingsHQ} withServer={selectedWorldId == -1} average={averagePurchaseHQPrice} />
 
-								<h4 class="mt-2">NQ Listings</h4>
-								<ListingTable listings={listingsNQ} withServer={selectedWorldId == -1} average={averagePurchaseNQPrice} />
+								{#if listingsHQ.length > 0}
+									<h4 class="mt-2">HQ Listings</h4>
+									<StatsTable
+										values={[
+											{
+												type: 'Price per unit',
+												mean: averageListingsHQPrice,
+												median: medianListingHQPrice,
+												mode: modeListingHQPrice,
+												stddev: standardDeviation(listingsHQPrices),
+												mad: medianAbsoluteDeviation(listingsHQPrices)
+											},
+											{
+												type: 'Quantity',
+												mean: meanListingsHQQuantity,
+												median: medianListingHQQuantity,
+												mode: modeListingHQQuantity,
+												stddev: standardDeviation(listingsHQQuantities),
+												mad: medianAbsoluteDeviation(listingsHQQuantities)
+											}
+										]}
+									/>
+
+									<ListingTable
+										listings={listingsHQ}
+										withServer={selectedWorldId == -1}
+										mean={averagePurchaseHQPrice}
+										median={medianPurchaseHQPrice}
+									/>
+								{:else}
+									<p>There are no HQ Listings.</p>
+								{/if}
+
+								{#if listingsNQ.length > 0}
+									<h4 class="mt-2">NQ Listings</h4>
+
+									<StatsTable
+										values={[
+											{
+												type: 'Price per unit',
+												mean: averageListingsNQPrice,
+												median: medianListingNQPrice,
+												mode: modeListingNQPrice,
+												stddev: standardDeviation(listingsNQPrices),
+												mad: medianAbsoluteDeviation(listingsNQPrices)
+											},
+											{
+												type: 'Quantity',
+												mean: meanListingsNQQuantity,
+												median: medianListingNQQuantity,
+												mode: modeListingNQQuantity,
+												stddev: standardDeviation(listingsNQQuantities),
+												mad: medianAbsoluteDeviation(listingsNQQuantities)
+											}
+										]}
+									/>
+
+									<ListingTable
+										listings={listingsNQ}
+										withServer={selectedWorldId == -1}
+										mean={averagePurchaseNQPrice}
+										median={medianPurchaseNQPrice}
+									/>
+								{:else}
+									<p>There are no NQ Listings.</p>
+								{/if}
 							</Col>
 							<Col>
 								<h4 class="mt-2">Purchases</h4>
-								<ul class="mt-2">
-									{#if !isNaN(averagePurchaseHQPrice)}
-										<li>Average Purchase HQ Price: <b>{numberWithCommas(averagePurchaseHQPrice)}</b></li>
-									{/if}
-									{#if !isNaN(averagePurchaseNQPrice)}
-										<li>Average Purchase NQ Price: <b>{numberWithCommas(averagePurchaseNQPrice)}</b></li>
-									{/if}
-								</ul>
+
+								<StatsTable
+									values={[
+										{
+											type: 'Price per unit (HQ)',
+											mean: averagePurchaseNQPrice,
+											median: medianPurchaseNQPrice,
+											mode: modePurchaseNQPrice,
+											stddev: purchasesHQ.length > 0 ? standardDeviation(purchasesHQPrices) : NaN,
+											mad: purchasesHQ.length > 0 ? medianAbsoluteDeviation(purchasesHQPrices) : NaN,
+											hidden: purchasesHQ.length == 0
+										},
+										{
+											type: 'Quantity (HQ)',
+											mean: meanPurchaseHQQuantity,
+											median: medianPurchaseHQQuantity,
+											mode: modePurchaseHQQuantity,
+											stddev: purchasesHQ.length > 0 ? standardDeviation(purchasesHQQuantities) : NaN,
+											mad: purchasesHQ.length > 0 ? medianAbsoluteDeviation(purchasesHQQuantities) : NaN,
+											hidden: purchasesHQ.length == 0
+										},
+										{
+											type: 'Price per unit (NQ)',
+											mean: averagePurchaseNQPrice,
+											median: medianPurchaseNQPrice,
+											mode: modePurchaseNQPrice,
+											stddev: purchasesNQ.length > 0 ? standardDeviation(purchasesNQQuantities) : NaN,
+											mad: purchasesNQ.length > 0 ? medianAbsoluteDeviation(purchasesNQQuantities) : NaN,
+											hidden: purchasesNQ.length == 0
+										},
+										{
+											type: 'Quantity (NQ)',
+											mean: meanPurchaseNQQuantity,
+											median: medianPurchaseNQQuantity,
+											mode: modePurchaseNQQuantity,
+											stddev: purchasesNQ.length > 0 ? standardDeviation(purchasesNQQuantities) : NaN,
+											mad: purchasesNQ.length > 0 ? medianAbsoluteDeviation(purchasesNQQuantities) : NaN,
+											hidden: purchasesNQ.length == 0
+										}
+									]}
+								/>
 
 								<PurchasesTable {purchases} withServer={selectedWorldId == -1} />
 							</Col>
