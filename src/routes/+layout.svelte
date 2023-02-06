@@ -58,7 +58,7 @@
 		</p>
 		<p class="mb-0">
 			You can help providing data using the dalamud
-			<a href="https://github.com/ZhyraPlugins/MarketUploader"> plugin </a>
+			<a href="https://github.com/ZhyraPlugins/MarketUploader">plugin</a>
 		</p>
 	</Alert>
 </Container>

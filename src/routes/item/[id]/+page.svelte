@@ -522,8 +522,8 @@
 											mean: averagePurchaseNQPrice,
 											median: medianPurchaseNQPrice,
 											mode: modePurchaseNQPrice,
-											stddev: purchasesNQ.length > 0 ? standardDeviation(purchasesNQQuantities) : NaN,
-											mad: purchasesNQ.length > 0 ? medianAbsoluteDeviation(purchasesNQQuantities) : NaN,
+											stddev: purchasesNQ.length > 0 ? standardDeviation(purchasesNQPrices) : NaN,
+											mad: purchasesNQ.length > 0 ? medianAbsoluteDeviation(purchasesNQPrices) : NaN,
 											hidden: purchasesNQ.length == 0
 										},
 										{
