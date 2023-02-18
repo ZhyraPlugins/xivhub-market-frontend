@@ -283,6 +283,13 @@
 									<p style="white-space: pre-line">
 										{item.description.replace(/[\n]+/g, '\n').replace(/(<([^>]+)>)/gi, '')}
 									</p>
+									<ul>
+										<li>Stack Size: {item.stack_size}</li>
+										<li>Item level: {item.level_item}</li>
+										<li>Equip level: {item.level_equip}</li>
+										<li>Can be HQ: {item.can_be_hq.toString()}</li>
+										<li>Rarity: {item.rarity}</li>
+									</ul>
 								</Col>
 							</Row>
 						</CardText>

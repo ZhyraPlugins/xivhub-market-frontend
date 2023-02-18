@@ -80,6 +80,11 @@ export interface XivItemInfo {
 	item_search_category: number;
 	item_search_category_iconhd: string;
 	item_search_category_name: string;
+	stack_size: number;
+	level_item: number;
+	level_equip: number;
+	rarity: number;
+	can_be_hq: boolean;
 }
 
 export interface ListingsResponse {
