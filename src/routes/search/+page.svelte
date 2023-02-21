@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { hubApi } from '$lib/api';
+	import Container from '$lib/components/Container.svelte';
+	import Card from '$lib/components/Card.svelte';
+	import CardHeader from '$lib/components/CardHeader.svelte';
+	import Button from '$lib/components/Button.svelte';
 	import Paginate from '$lib/components/Paginate.svelte';
-	import { Button, Card, CardBody, CardHeader, CardText, CardTitle, Container, Form, FormGroup, Input, Table } from 'sveltestrap';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -24,37 +27,48 @@
 
 <Container>
 	<Card class="mt-3">
-		<CardHeader><CardTitle>Search</CardTitle></CardHeader>
-		<CardBody>
-			<CardText>
-				<Form>
-					<FormGroup>
-						<Input type="text" name="search" bind:value={inputSearch} />
-					</FormGroup>
-					<Button color="primary" on:click={onSearch}>Search</Button>
-				</Form>
+		<CardHeader><div class="text-center font-bold text-3xl">Search</div></CardHeader>
+		<div>
+			<div class="px-4 py-2 flex justify-center gap-2 align-middle ">
+				<input
+					type="text"
+					name="search"
+					class="shadow border border-teal-500 rounded 
+						py-2 px-3 text-white bg-gray-700 focus:bg-gray-800
+						flex-1 max-w-screen-sm
+					 	focus:outline-none focus:shadow-outline"
+					bind:value={inputSearch} />
+				<Button on:click={onSearch}>Search</Button>
+			</div>
 
-				<div class="d-flex justify-content-center">
-					<Paginate class="mt-2" total={data.items.total_pages} bind:page />
-				</div>
+			<div class="flex justify-center m-2">
+				<Paginate class="mt-2" total={data.items.total_pages} bind:page />
+			</div>
 
-				<Table hover responsive>
-					<thead>
-						<th>Image</th>
-						<th>Item</th>
-						<th>Listings</th>
-					</thead>
-					<tbody>
-						{#each data.items.items as item}
+			<div class="flex">
+				<div class="overflow-y-auto border border-gray-900" style="max-height: 500px;">
+					<table class="table-fixed border-collapse rounded-lg shadow text-center border border-gray-800 w-full">
+						<thead class="bg-gray-900 top-0 sticky">
 							<tr>
-								<td><img alt={`${item.item_id} Icon`} src={`https://xivapi.com${item.icon}`} /></td>
-								<td><a class="text-decoration-none fw-bold " href={`/item/${item.item_id}`}>{item.name}</a></td>
-								<td>{item.listings ?? 0}</td>
+								<th class="px-2 py-2">Image</th>
+								<th class="px-2 py-2">Item</th>
+								<th class="px-2 py-2">Listings</th>
 							</tr>
-						{/each}
-					</tbody>
-				</Table>
-			</CardText>
-		</CardBody>
+						</thead>
+						<tbody class="bg-gray-800 border border-gray-800">
+							{#each data.items.items as item}
+								<tr class="even:bg-gray-700">
+									<td class="px-4 py-2 flex align-middle justify-center"
+										><img alt={`${item.item_id} Icon`} src={`https://xivapi.com${item.icon}`} /></td>
+									<td class="px-4 py-2"
+										><a class="font-bold text-teal-400 hover:underline" href={`/item/${item.item_id}`}>{item.name}</a></td>
+									<td class="px-4 py-2">{item.listings ?? 0}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
 	</Card>
 </Container>

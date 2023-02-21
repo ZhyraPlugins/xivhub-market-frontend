@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { xivApi, type Listing } from '$lib/api';
+	import { xivApi, type Listing, type XivApiItem, type XivItemInfo } from '$lib/api';
 	import { numberWithCommas } from '$lib/util';
 	import { formatDistanceToNowStrict } from 'date-fns';
 	import Card from '$lib/components/Card.svelte';
@@ -10,6 +10,7 @@
 	export let withServer = false;
 	export let mean: number;
 	export let median: number;
+	export let item_info: XivItemInfo;
 </script>
 
 <Card class="border border-gray-900">
@@ -28,7 +29,9 @@
 						<th class="px-2 py-2">Price per unit</th>
 						<th class="px-2 py-2">Quantity</th>
 						<th class="px-2 py-2">Total</th>
-						<th class="px-2 py-2">Materia</th>
+						{#if item_info.materia_slot_count > 0}
+							<th class="px-2 py-2">Materia</th>
+						{/if}
 						<th class="px-2 py-2">Listed</th>
 					</tr>
 				</thead>
@@ -42,13 +45,15 @@
 								<td>{xivApi.getServer(listing.world_id).name}</td>
 							{/if}
 
-							<td class="px-2 py-2 text-end {diffMean < 0 ? 'text-green-600' : 'text-rose-500'}">{diffMean.toFixed(2)}%</td>
-							<td class="px-2 py-2 text-end {diffMedian < 0 ? 'text-green-600' : 'text-rose-500'}">{diffMedian.toFixed(2)}%</td>
-							<td class="px-2 py-2 font-bold text-end">{numberWithCommas(listing.price_per_unit)}</td>
-							<td class="px-2 py-2 font-bold text-end">{listing.quantity}</td>
+							<td class="px-2 py-2 text-end font-bold {diffMean < 0 ? 'text-green-400' : 'text-rose-400'}">{diffMean.toFixed(2)}%</td>
+							<td class="px-2 py-2 text-end font-bold {diffMedian < 0 ? 'text-green-400' : 'text-rose-400'}">{diffMedian.toFixed(2)}%</td>
+							<td class="px-2 py-2 font-bold text-end text-teal-400">{numberWithCommas(listing.price_per_unit)}</td>
+							<td class="px-2 py-2 font-bold text-end text-teal-400">{listing.quantity}</td>
 							<td class="px-2 py-2 font-bold text-end">{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
-							<td>{listing.materia_count}</td>
-							<td>{formatDistanceToNowStrict(new Date(listing.last_review_time))} ago</td>
+							{#if item_info.materia_slot_count > 0}
+								<td class="px-2 py-2 font-bold text-end ">{listing.materia_count}</td>
+							{/if}
+							<td class="px-2 py-2 text-end">{formatDistanceToNowStrict(new Date(listing.last_review_time))} ago</td>
 						</tr>
 					{/each}
 				</tbody>

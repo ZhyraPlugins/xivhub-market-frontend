@@ -235,7 +235,9 @@
 				label: 'Price per unit NQ',
 				data: reversedPurchasesNQ.map((x) => x.price_per_unit),
 				borderWidth: 2,
-				fill: 'origin'
+				fill: 'origin',
+				borderColor: '#0d9488',
+				backgroundColor: '#1f2937'
 			}
 		]
 	};
@@ -248,7 +250,9 @@
 				label: 'Price per unit HQ',
 				data: reversedPurchasesHQ.map((x) => x.price_per_unit),
 				borderWidth: 2,
-				fill: 'origin'
+				fill: 'origin',
+				borderColor: '#0d9488',
+				backgroundColor: '#1f2937'
 			}
 		]
 	};
@@ -406,8 +410,8 @@
 		</div>
 	</Card>
 
-	<div class="flex flex-row gap-2 w-full">
-		<div class="flex flex-col gap-2 w-full">
+	<div class="flex flex-row gap-2 flex-1">
+		<div class="flex flex-col gap-2 flex-1">
 			{#if listingsHQ.length > 0}
 				<StatsTable
 					title="HQ Listing Stats"
@@ -435,7 +439,8 @@
 					listings={listingsHQ}
 					withServer={selectedWorldId == -1}
 					mean={averagePurchaseHQPrice}
-					median={medianPurchaseHQPrice} />
+					median={medianPurchaseHQPrice}
+					item_info={item} />
 			{:else}
 				<!--	<p>There are no HQ Listings.</p>-->
 			{/if}
@@ -464,6 +469,7 @@
 
 				<ListingTable
 					title="NQ Listings"
+					item_info={item}
 					listings={listingsNQ}
 					withServer={selectedWorldId == -1}
 					mean={averagePurchaseNQPrice}
@@ -473,7 +479,7 @@
 			{/if}
 		</div>
 
-		<div class="flex flex-col gap-2 w-full">
+		<div class="flex flex-col gap-2 flex-1">
 			<StatsTable
 				title="Purchases Stats"
 				values={[
@@ -517,6 +523,11 @@
 
 			<PurchasesTable title="Purchases" {purchases} withServer={selectedWorldId == -1} />
 		</div>
+	</div>
+
+	<div class="flex flex-row w-full gap-2">
+		<div class="flex-1"><LineGraph data={purchasesDataNQ} /></div>
+		<div class="flex-1"><LineGraph data={purchasesHQData} /></div>
 	</div>
 
 	<!--

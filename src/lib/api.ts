@@ -83,6 +83,7 @@ export interface XivItemInfo {
 	stack_size: number;
 	level_item: number;
 	level_equip: number;
+	materia_slot_count: number;
 	rarity: number;
 	can_be_hq: boolean;
 }

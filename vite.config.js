@@ -7,7 +7,7 @@ const config = {
 		include: ['src/**/*.{test,spec}.{js,ts}']
 	},
 	ssr: {
-        noExternal: ['@popperjs/core', 'chartjs-adapter-date-fns'],
+        noExternal: ['chartjs-adapter-date-fns'],
     }
 };
 
