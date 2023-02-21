@@ -17,8 +17,8 @@
 	<div class="flex items-center flex-shrink-0 text-white mr-6">
 		<span class="font-semibold text-xl tracking-tight"><a href="/">Xivhub Market</a></span>
 	</div>
-	<div class="w-full block flex-grow lg:flex lg:items-center lg:w-auto">
-		<div class="text-sm lg:flex-grow">
+	<div class="flex-grow flex items-center">
+		<div class="text-sm flex-grow">
 			<!--
 			<a href="/search" class="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white mr-4">Search</a>
 			<a href="#responsive-header" class="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white mr-4"> Examples </a>
@@ -27,7 +27,7 @@
 		</div>
 
 		<div>
-			<a href="/search" class="block mt-4 lg:inline-block lg:mt-0 text-gray-200 hover:text-white mr-4">Search</a>
+			<a href="/search" class="inline-block mt-0 text-gray-200 hover:text-white mr-4">Search</a>
 			<Button href="https://github.com/ZhyraPlugins/MarketUploader">Dalamud Upload Plugin</Button>
 		</div>
 	</div>
@@ -35,7 +35,7 @@
 
 <Container>
 	<Alert type="warning">
-		<h4 class="font-bold">Work in progress</h4>
+		<h4 class="font-bold text-2xl">Work in progress</h4>
 		<p>
 			The site is currently in live development. You can join our <a href="https://discord.gg/GZK9aME8wN" class="underline">discord</a>
 			or follow us on <a href="https://twitter.com/XivHub" class="underline">twitter</a>!

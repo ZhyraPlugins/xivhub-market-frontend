@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { xivApi, type Listing, type Purchase, type XivItemInfo } from '$lib/api';
 	import { numberWithCommas } from '$lib/util';
-	import { Nav, NavItem, NavLink } from 'sveltestrap';
 	import type { PageData } from './$types';
 	import { formatDistanceToNowStrict } from 'date-fns';
 	import LineGraph from '$lib/LineGraph.svelte';
@@ -298,7 +297,7 @@
 
 	<!-- Datacenters -->
 	<Card>
-		<ul class="flex px-4 py-2 gap-2">
+		<ul class="flex px-4 py-2 gap-2 flex-wrap">
 			{#each Object.entries(DataCenters) as [datacenterIdStr, datacenter]}
 				{@const datacenterId = parseInt(datacenterIdStr)}
 				{@const lastUploadDate = lastUpdatedDatacenter.get(parseInt(datacenterIdStr)) ?? 'unknown'}
@@ -330,7 +329,7 @@
 	<!-- Worlds -->
 	<Card>
 		<div class="flex flex-col">
-			<ul class="flex px-4 py-2 gap-2">
+			<ul class="flex px-4 py-2 gap-2 flex-wrap">
 				<li class="flex-1">
 					<button
 						class="text-center block border border-gray-500 rounded-md hover:border-teal-400 text-teal-500 
@@ -375,7 +374,7 @@
 					</li>
 				{/each}
 			</ul>
-			<div class="flex justify-center pb-2 gap-4">
+			<div class="flex justify-center pb-2 gap-4 flex-wrap">
 				{#if cheapestHQListingPerDatacenter.has(selectedDatacenter)}
 					{@const cheapest = cheapestHQListingPerDatacenter.get(selectedDatacenter)}
 					<div>
@@ -410,7 +409,7 @@
 		</div>
 	</Card>
 
-	<div class="flex flex-row gap-2 flex-1">
+	<div class="flex flex-row gap-2 flex-1 flex-wrap">
 		<div class="flex flex-col gap-2 flex-1">
 			{#if listingsHQ.length > 0}
 				<StatsTable
