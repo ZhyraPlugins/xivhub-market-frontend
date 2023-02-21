@@ -86,8 +86,7 @@
 								}
 							}
 						}
-					}}
-				/>
+					}} />
 			</Card>
 		</div>
 		<div class="flex-1 text-center">
@@ -110,37 +109,35 @@
 								}
 							}
 						}
-					}}
-				/>
+					}} />
 			</Card>
 		</div>
 	</div>
 
-	<Card>
+	<Card class="border border-gray-900">
 		<CardHeader><div class="text-center font-bold text-3xl">Latest Uploads</div></CardHeader>
-		<div class="px-6 py-2 flex justify-center">
-			<div class="overflow-y-auto" style="height: 500px;">
+		<div class="flex">
+			<div class="overflow-y-auto w-full" style="max-height: 500px;">
 				<table class="table-fixed border-collapse rounded-lg shadow w-full text-center border border-gray-800">
 					<thead class="bg-gray-900 top-0 sticky">
 						<tr>
-							<th class="px-4 py-2">Icon</th>
-							<th class="px-4 py-2">Item</th>
-							<th class="px-4 py-2">World</th>
-							<th class="px-4 py-2">When</th>
-							<th class="px-4 py-2">Upload Type</th>
+							<th class="px-2 py-2">Icon</th>
+							<th class="px-2 py-2">Item</th>
+							<th class="px-2 py-2">World</th>
+							<th class="px-2 py-2">When</th>
+							<th class="px-2 py-2">Upload Type</th>
 						</tr>
 					</thead>
 					<tbody class="bg-gray-800 border border-gray-800">
 						{#each data.last_uploads as upload}
 							<tr class="even:bg-gray-700">
 								<td class="px-4 py-2 flex align-middle justify-center"
-									><img alt={`${upload.item_id} Icon`} src={xivApi.apiBase(upload.icon)} /></td
-								>
+									><img alt={`${upload.item_id} Icon`} src={xivApi.apiBase(upload.icon)} /></td>
 								<td class="px-4 py-2"
-									><a class="font-bold text-teal-400 hover:underline" href={`/item/${upload.item_id}`}>{upload.name}</a></td
-								>
+									><a class="font-bold text-teal-400 hover:underline" href={`/item/${upload.item_id}`}>{upload.name}</a></td>
 								<td class="px-4 py-2">{xivApi.getServer(upload.world_id).name}</td>
-								<td class="px-4 py-2">{formatDistanceToNow(new Date(upload.upload_time))} ago</td>
+								<td class="px-4 py-2" title={new Date(upload.upload_time).toLocaleString()}
+									>{formatDistanceToNow(new Date(upload.upload_time))} ago</td>
 								<td class="px-4 py-2">{upload.upload_type == 0 ? 'Listings' : 'Purchases'}</td>
 							</tr>
 						{/each}

@@ -9,7 +9,7 @@
 	const color = colors[type];
 </script>
 
-<div class="{color} border-t-8 rounded-b px-4 py-3 shadow-md" role="alert">
+<div class="{color} border-t-8 rounded-b px-4 py-3 shadow-md my-2" role="alert">
 	<div class="flex">
 		<div>
 			<slot />

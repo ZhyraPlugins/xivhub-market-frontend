@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { xivApi, type Listing, type Purchase, type XivItemInfo } from '$lib/api';
 	import { numberWithCommas } from '$lib/util';
-	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Nav, NavItem, NavLink, Row } from 'sveltestrap';
+	import { Nav, NavItem, NavLink } from 'sveltestrap';
 	import type { PageData } from './$types';
 	import { formatDistanceToNowStrict } from 'date-fns';
 	import LineGraph from '$lib/LineGraph.svelte';
@@ -11,6 +11,9 @@
 	import { onMount } from 'svelte';
 	import { median, medianAbsoluteDeviation, mode, sampleSkewness, standardDeviation, variance } from 'simple-statistics';
 	import StatsTable from '$lib/components/StatsTable.svelte';
+	import Container from '$lib/components/Container.svelte';
+	import Card from '$lib/components/Card.svelte';
+	import CardHeader from '$lib/components/CardHeader.svelte';
 
 	export let data: PageData;
 	export let item: XivItemInfo = data.listings.item;
@@ -249,336 +252,294 @@
 			}
 		]
 	};
+
+	$: lastDatacenterUploadDate = lastUpdatedDatacenter.get(selectedDatacenter);
 </script>
 
 <svelte:head>
 	<title>{item.name} | Xivhub Market</title>
 	<meta
 		name="description"
-		content={`Market listings and purchases for ${item.name}. \nHQ: ${globalAverageHqPrice} | NQ: ${globalAverageNqPrice}`}
-	/>
+		content={`Market listings and purchases for ${item.name}. \nHQ: ${globalAverageHqPrice} | NQ: ${globalAverageNqPrice}`} />
 	<meta property="og:image" content={xivApi.apiBase(item.icon_hd)} />
 	<meta
 		property="og:description"
-		content={`Market listings and purchases for ${item.name}. \nHQ: ${globalAverageHqPrice} | NQ: ${globalAverageNqPrice}`}
-	/>
+		content={`Market listings and purchases for ${item.name}. \nHQ: ${globalAverageHqPrice} | NQ: ${globalAverageNqPrice}`} />
 </svelte:head>
 
-<Container fluid>
-	<Container>
-		<Row>
-			<Col>
-				<Card>
-					<CardHeader>
-						<CardTitle>{item.name} <span class="text-muted fs-6">{item.item_kind_name}</span></CardTitle>
-					</CardHeader>
-					<CardBody>
-						<CardText>
-							<Row>
-								<Col xs={1}>
-									<img alt={`${item.name} Icon`} src={`https://xivapi.com${item.icon_hd}`} />
-									<img alt="Item Category Icon" class="mt-2" src={xivApi.apiBase(item.item_search_category_iconhd)} />
-								</Col>
-								<Col>
-									<p style="white-space: pre-line">
-										{item.description.replace(/[\n]+/g, '\n').replace(/(<([^>]+)>)/gi, '')}
-									</p>
-									<ul>
-										<li>Stack Size: {item.stack_size}</li>
-										<li>Item level: {item.level_item}</li>
-										<li>Equip level: {item.level_equip}</li>
-										<li>Can be HQ: {item.can_be_hq.toString()}</li>
-										<li>Rarity: {item.rarity}</li>
-									</ul>
-								</Col>
-							</Row>
-						</CardText>
-					</CardBody>
-				</Card>
-			</Col>
-		</Row>
+<Container class="flex flex-col gap-2">
+	<Card>
+		<CardHeader>
+			<div class="font-bold text-xl">{item.name} <span class="text-base font-normal text-gray-100">{item.item_kind_name}</span></div>
+		</CardHeader>
+		<div class="flex flex-row px-4 py-2 gap-4">
+			<div class="max-w-xs">
+				<img alt={`${item.name} Icon`} src={`https://xivapi.com${item.icon_hd}`} />
+				<img alt="Item Category Icon" class="mt-2" src={xivApi.apiBase(item.item_search_category_iconhd)} />
+			</div>
+			<div class="flex-1">
+				<p class="whitespace-pre-wrap">
+					{item.description.replace(/[\n]+/g, '\n').replace(/(<([^>]+)>)/gi, '')}
+				</p>
+				<ul class="list-inside list-disc">
+					<li>Stack Size: {item.stack_size}</li>
+					<li>Item level: {item.level_item}</li>
+					<li>Equip level: {item.level_equip}</li>
+					<li>Can be HQ: {item.can_be_hq.toString()}</li>
+					<li>Rarity: {item.rarity}</li>
+				</ul>
+			</div>
+		</div>
+	</Card>
 
-		<Row>
-			<Col>
-				<Card class="mt-2">
-					<CardBody>
-						<Nav pills class="text-center d-flex justify-content-center">
-							{#each Object.entries(DataCenters) as [datacenterIdStr, datacenter]}
-								{@const datacenterId = parseInt(datacenterIdStr)}
-								{@const lastUploadDate = lastUpdatedDatacenter.get(parseInt(datacenterIdStr)) ?? 'unknown'}
-								<NavItem id={datacenterIdStr}>
-									<NavLink
-										class="fw-bold"
-										active={selectedDatacenter == datacenterId}
-										on:click={() => {
-											selectedDatacenter = datacenterId;
-											localStorage.setItem('default-dc', datacenterId.toString());
-											selectedWorld = -1;
-										}}
-									>
-										<span>{datacenter.name}</span>
-										<br />
-										<span class="fst-italic fw-normal">
-											{#if lastUploadDate === 'unknown'}
-												{lastUploadDate}
-											{:else}
-												{formatDistanceToNowStrict(lastUploadDate)} ago
-											{/if}
-										</span>
-									</NavLink>
-								</NavItem>
-							{/each}
-						</Nav>
-					</CardBody>
-				</Card>
-			</Col>
-		</Row>
-
-		<Row>
-			<Col>
-				<Card class="mt-2">
-					<CardBody>
-						<Nav pills class="text-center d-flex justify-content-center">
-							<NavItem>
-								<NavLink
-									class="fw-bold"
-									active={selectedWorld == -1}
-									on:click={() => {
-										selectedWorld = -1;
-										selectedWorldId = -1;
-									}}
-								>
-									{@const lastUploadDate = lastUpdatedDatacenter.get(selectedDatacenter) ?? 'unknown'}
-									<span>All</span>
-									<br />
-									<span class="fst-italic fw-normal">
-										{#if lastUploadDate === 'unknown'}
-											{lastUploadDate}
-										{:else}
-											{formatDistanceToNowStrict(lastUploadDate)} ago
-										{/if}
-									</span>
-								</NavLink>
-							</NavItem>
-							{#each Object.entries(DataCenters[selectedDatacenter].worlds) as [worldId, worldName], i}
-								{@const lastUploadDate = lastUpdated.get(worldName) ?? 'unknown'}
-								<NavItem>
-									<NavLink
-										class="fw-bold"
-										active={selectedWorld == i}
-										on:click={() => {
-											selectedWorld = i;
-											selectedWorldId = parseInt(worldId);
-										}}
-									>
-										<span>{worldName}</span>
-										<br />
-										<span class="fst-italic fw-normal">
-											{#if lastUploadDate === 'unknown'}
-												{lastUploadDate}
-											{:else}
-												{formatDistanceToNowStrict(lastUploadDate)} ago
-											{/if}
-										</span>
-									</NavLink>
-								</NavItem>
-							{/each}
-						</Nav>
-
-						<Row class="d-flex justify-content-center text-center">
-							{#if cheapestHQListingPerDatacenter.has(selectedDatacenter)}
-								<Col>
-									{@const cheapest = cheapestHQListingPerDatacenter.get(selectedDatacenter)}
-									{#if cheapest}
-										<span>
-											Cheapest HQ at
-											<b>{xivApi.getServer(cheapest.world_id).name}</b>:
-											<b
-												>{cheapest.quantity} x {numberWithCommas(cheapest.price_per_unit)} = {numberWithCommas(
-													cheapest.quantity * cheapest.price_per_unit
-												)}</b
-											>
-										</span>
-									{/if}
-								</Col>
+	<!-- Datacenters -->
+	<Card>
+		<ul class="flex px-4 py-2 gap-2">
+			{#each Object.entries(DataCenters) as [datacenterIdStr, datacenter]}
+				{@const datacenterId = parseInt(datacenterIdStr)}
+				{@const lastUploadDate = lastUpdatedDatacenter.get(parseInt(datacenterIdStr)) ?? 'unknown'}
+				<li id={datacenterIdStr} class="flex-1">
+					<button
+						class="text-center block border border-gray-500 rounded-md hover:border-teal-400 text-teal-500 
+							hover:bg-gray-800 py-1 px-2 w-full h-full
+						 {selectedDatacenter == datacenterId ? 'bg-gray-800' : ''}"
+						on:click={() => {
+							selectedDatacenter = datacenterId;
+							localStorage.setItem('default-dc', datacenterId.toString());
+							selectedWorld = -1;
+						}}>
+						<span class="font-bold text-lg">{datacenter.name}</span>
+						<br />
+						<span class="italic font-normal text-sm">
+							{#if lastUploadDate === 'unknown'}
+								{lastUploadDate}
+							{:else}
+								{formatDistanceToNowStrict(lastUploadDate)} ago
 							{/if}
-							{#if cheapestNQListingPerDatacenter.has(selectedDatacenter)}
-								<Col>
-									{@const cheapest = cheapestNQListingPerDatacenter.get(selectedDatacenter)}
-									{#if cheapest}
-										<span>
-											Cheapest NQ at
-											<b>{xivApi.getServer(cheapest.world_id).name}</b>:
-											<b
-												>{cheapest.quantity} x {numberWithCommas(cheapest.price_per_unit)} = {numberWithCommas(
-													cheapest.quantity * cheapest.price_per_unit
-												)}</b
-											>
-										</span>
-									{/if}
-								</Col>
+						</span>
+					</button>
+				</li>
+			{/each}
+		</ul>
+	</Card>
+
+	<!-- Worlds -->
+	<Card>
+		<div class="flex flex-col">
+			<ul class="flex px-4 py-2 gap-2">
+				<li class="flex-1">
+					<button
+						class="text-center block border border-gray-500 rounded-md hover:border-teal-400 text-teal-500 
+							hover:bg-gray-800 py-1 px-2 w-full h-full
+						 {selectedWorld == -1 ? 'bg-gray-800' : ''}"
+						on:click={() => {
+							selectedWorld = -1;
+							selectedWorldId = -1;
+						}}>
+						<span class="font-bold text-lg">All</span>
+						<br />
+						<span class="italic font-normal text-sm">
+							{#if lastDatacenterUploadDate === undefined}
+								Unknown
+							{:else}
+								{formatDistanceToNowStrict(lastDatacenterUploadDate)} ago
 							{/if}
-						</Row>
-					</CardBody>
-				</Card>
-			</Col>
-		</Row>
-	</Container>
-
-	<Row>
-		<Col>
-			<Card class="mt-3">
-				<CardBody>
-					<CardText>
-						<Row>
-							<Col>
-								<h4 class="mt-2">Listings</h4>
-
-								{#if listingsHQ.length > 0}
-									<h4 class="mt-2">HQ Listings</h4>
-									<StatsTable
-										values={[
-											{
-												type: 'Price per unit',
-												mean: averageListingsHQPrice,
-												median: medianListingHQPrice,
-												mode: modeListingHQPrice,
-												stddev: standardDeviation(listingsHQPrices),
-												mad: medianAbsoluteDeviation(listingsHQPrices)
-											},
-											{
-												type: 'Quantity',
-												mean: meanListingsHQQuantity,
-												median: medianListingHQQuantity,
-												mode: modeListingHQQuantity,
-												stddev: standardDeviation(listingsHQQuantities),
-												mad: medianAbsoluteDeviation(listingsHQQuantities)
-											}
-										]}
-									/>
-
-									<ListingTable
-										listings={listingsHQ}
-										withServer={selectedWorldId == -1}
-										mean={averagePurchaseHQPrice}
-										median={medianPurchaseHQPrice}
-									/>
+						</span>
+					</button>
+				</li>
+				{#each Object.entries(DataCenters[selectedDatacenter].worlds) as [worldId, worldName], i}
+					{@const lastUploadDate = lastUpdated.get(worldName)}
+					<li class="flex-1">
+						<button
+							class="text-center block border border-gray-500 rounded-md hover:border-teal-400 text-teal-500 
+								 hover:bg-gray-800 py-1 px-2 w-full h-full
+						 			{selectedWorld == i ? 'bg-gray-800' : ''}"
+							on:click={() => {
+								selectedWorld = i;
+								selectedWorldId = parseInt(worldId);
+							}}>
+							<span class="font-bold text-lg">{worldName}</span>
+							<br />
+							<span class="italic font-normal text-sm">
+								{#if lastUploadDate === undefined}
+									Unknown
 								{:else}
-									<p>There are no HQ Listings.</p>
+									{formatDistanceToNowStrict(lastUploadDate)} ago
 								{/if}
+							</span>
+						</button>
+					</li>
+				{/each}
+			</ul>
+			<div class="flex justify-center pb-2 gap-4">
+				{#if cheapestHQListingPerDatacenter.has(selectedDatacenter)}
+					{@const cheapest = cheapestHQListingPerDatacenter.get(selectedDatacenter)}
+					<div>
+						{#if cheapest}
+							<span>
+								Cheapest HQ at
+								<b>{xivApi.getServer(cheapest.world_id).name}</b>:
+								<b
+									>{cheapest.quantity} x {numberWithCommas(cheapest.price_per_unit)} = {numberWithCommas(
+										cheapest.quantity * cheapest.price_per_unit
+									)}</b>
+							</span>
+						{/if}
+					</div>
+				{/if}
+				{#if cheapestNQListingPerDatacenter.has(selectedDatacenter)}
+					{@const cheapest = cheapestNQListingPerDatacenter.get(selectedDatacenter)}
+					<div>
+						{#if cheapest}
+							<span>
+								Cheapest NQ at
+								<b>{xivApi.getServer(cheapest.world_id).name}</b>:
+								<b
+									>{cheapest.quantity} x {numberWithCommas(cheapest.price_per_unit)} = {numberWithCommas(
+										cheapest.quantity * cheapest.price_per_unit
+									)}</b>
+							</span>
+						{/if}
+					</div>
+				{/if}
+			</div>
+		</div>
+	</Card>
 
-								{#if listingsNQ.length > 0}
-									<h4 class="mt-2">NQ Listings</h4>
+	<div class="flex flex-row gap-2 w-full">
+		<div class="flex flex-col gap-2 w-full">
+			{#if listingsHQ.length > 0}
+				<StatsTable
+					title="HQ Listing Stats"
+					values={[
+						{
+							type: 'Price per unit',
+							mean: averageListingsHQPrice,
+							median: medianListingHQPrice,
+							mode: modeListingHQPrice,
+							stddev: standardDeviation(listingsHQPrices),
+							mad: medianAbsoluteDeviation(listingsHQPrices)
+						},
+						{
+							type: 'Quantity',
+							mean: meanListingsHQQuantity,
+							median: medianListingHQQuantity,
+							mode: modeListingHQQuantity,
+							stddev: standardDeviation(listingsHQQuantities),
+							mad: medianAbsoluteDeviation(listingsHQQuantities)
+						}
+					]} />
 
-									<StatsTable
-										values={[
-											{
-												type: 'Price per unit',
-												mean: averageListingsNQPrice,
-												median: medianListingNQPrice,
-												mode: modeListingNQPrice,
-												stddev: standardDeviation(listingsNQPrices),
-												mad: medianAbsoluteDeviation(listingsNQPrices)
-											},
-											{
-												type: 'Quantity',
-												mean: meanListingsNQQuantity,
-												median: medianListingNQQuantity,
-												mode: modeListingNQQuantity,
-												stddev: standardDeviation(listingsNQQuantities),
-												mad: medianAbsoluteDeviation(listingsNQQuantities)
-											}
-										]}
-									/>
+				<ListingTable
+					title="HQ Listings"
+					listings={listingsHQ}
+					withServer={selectedWorldId == -1}
+					mean={averagePurchaseHQPrice}
+					median={medianPurchaseHQPrice} />
+			{:else}
+				<!--	<p>There are no HQ Listings.</p>-->
+			{/if}
 
-									<ListingTable
-										listings={listingsNQ}
-										withServer={selectedWorldId == -1}
-										mean={averagePurchaseNQPrice}
-										median={medianPurchaseNQPrice}
-									/>
-								{:else}
-									<p>There are no NQ Listings.</p>
-								{/if}
-							</Col>
-							<Col>
-								<h4 class="mt-2">Purchases</h4>
+			{#if listingsNQ.length > 0}
+				<StatsTable
+					title="NQ Listing Stats"
+					values={[
+						{
+							type: 'Price per unit',
+							mean: averageListingsNQPrice,
+							median: medianListingNQPrice,
+							mode: modeListingNQPrice,
+							stddev: standardDeviation(listingsNQPrices),
+							mad: medianAbsoluteDeviation(listingsNQPrices)
+						},
+						{
+							type: 'Quantity',
+							mean: meanListingsNQQuantity,
+							median: medianListingNQQuantity,
+							mode: modeListingNQQuantity,
+							stddev: standardDeviation(listingsNQQuantities),
+							mad: medianAbsoluteDeviation(listingsNQQuantities)
+						}
+					]} />
 
-								<StatsTable
-									values={[
-										{
-											type: 'Price per unit (HQ)',
-											mean: averagePurchaseNQPrice,
-											median: medianPurchaseNQPrice,
-											mode: modePurchaseNQPrice,
-											stddev: purchasesHQ.length > 0 ? standardDeviation(purchasesHQPrices) : NaN,
-											mad: purchasesHQ.length > 0 ? medianAbsoluteDeviation(purchasesHQPrices) : NaN,
-											hidden: purchasesHQ.length == 0
-										},
-										{
-											type: 'Quantity (HQ)',
-											mean: meanPurchaseHQQuantity,
-											median: medianPurchaseHQQuantity,
-											mode: modePurchaseHQQuantity,
-											stddev: purchasesHQ.length > 0 ? standardDeviation(purchasesHQQuantities) : NaN,
-											mad: purchasesHQ.length > 0 ? medianAbsoluteDeviation(purchasesHQQuantities) : NaN,
-											hidden: purchasesHQ.length == 0
-										},
-										{
-											type: 'Price per unit (NQ)',
-											mean: averagePurchaseNQPrice,
-											median: medianPurchaseNQPrice,
-											mode: modePurchaseNQPrice,
-											stddev: purchasesNQ.length > 0 ? standardDeviation(purchasesNQPrices) : NaN,
-											mad: purchasesNQ.length > 0 ? medianAbsoluteDeviation(purchasesNQPrices) : NaN,
-											hidden: purchasesNQ.length == 0
-										},
-										{
-											type: 'Quantity (NQ)',
-											mean: meanPurchaseNQQuantity,
-											median: medianPurchaseNQQuantity,
-											mode: modePurchaseNQQuantity,
-											stddev: purchasesNQ.length > 0 ? standardDeviation(purchasesNQQuantities) : NaN,
-											mad: purchasesNQ.length > 0 ? medianAbsoluteDeviation(purchasesNQQuantities) : NaN,
-											hidden: purchasesNQ.length == 0
-										}
-									]}
-								/>
+				<ListingTable
+					title="NQ Listings"
+					listings={listingsNQ}
+					withServer={selectedWorldId == -1}
+					mean={averagePurchaseNQPrice}
+					median={medianPurchaseNQPrice} />
+			{:else}
+				<p>There are no NQ Listings.</p>
+			{/if}
+		</div>
 
-								<PurchasesTable {purchases} withServer={selectedWorldId == -1} />
-							</Col>
-						</Row>
-					</CardText>
-				</CardBody>
-			</Card>
-		</Col>
-	</Row>
+		<div class="flex flex-col gap-2 w-full">
+			<StatsTable
+				title="Purchases Stats"
+				values={[
+					{
+						type: 'Price per unit (HQ)',
+						mean: averagePurchaseNQPrice,
+						median: medianPurchaseNQPrice,
+						mode: modePurchaseNQPrice,
+						stddev: purchasesHQ.length > 0 ? standardDeviation(purchasesHQPrices) : NaN,
+						mad: purchasesHQ.length > 0 ? medianAbsoluteDeviation(purchasesHQPrices) : NaN,
+						hidden: purchasesHQ.length == 0
+					},
+					{
+						type: 'Quantity (HQ)',
+						mean: meanPurchaseHQQuantity,
+						median: medianPurchaseHQQuantity,
+						mode: modePurchaseHQQuantity,
+						stddev: purchasesHQ.length > 0 ? standardDeviation(purchasesHQQuantities) : NaN,
+						mad: purchasesHQ.length > 0 ? medianAbsoluteDeviation(purchasesHQQuantities) : NaN,
+						hidden: purchasesHQ.length == 0
+					},
+					{
+						type: 'Price per unit (NQ)',
+						mean: averagePurchaseNQPrice,
+						median: medianPurchaseNQPrice,
+						mode: modePurchaseNQPrice,
+						stddev: purchasesNQ.length > 0 ? standardDeviation(purchasesNQPrices) : NaN,
+						mad: purchasesNQ.length > 0 ? medianAbsoluteDeviation(purchasesNQPrices) : NaN,
+						hidden: purchasesNQ.length == 0
+					},
+					{
+						type: 'Quantity (NQ)',
+						mean: meanPurchaseNQQuantity,
+						median: medianPurchaseNQQuantity,
+						mode: modePurchaseNQQuantity,
+						stddev: purchasesNQ.length > 0 ? standardDeviation(purchasesNQQuantities) : NaN,
+						mad: purchasesNQ.length > 0 ? medianAbsoluteDeviation(purchasesNQQuantities) : NaN,
+						hidden: purchasesNQ.length == 0
+					}
+				]} />
 
-	<Row class="mt-2">
-		<Col>
-			<Card>
-				<CardHeader>
-					<CardTitle>NQ Purchase History</CardTitle>
-				</CardHeader>
-				<CardBody>
-					<CardText class="text-center">
-						<LineGraph data={purchasesDataNQ} />
-					</CardText>
-				</CardBody>
-			</Card>
-		</Col>
+			<PurchasesTable title="Purchases" {purchases} withServer={selectedWorldId == -1} />
+		</div>
+	</div>
 
-		<Col>
-			<Card>
-				<CardHeader>
-					<CardTitle>HQ Purchase History</CardTitle>
-				</CardHeader>
-				<CardBody>
-					<CardText class="text-center">
-						<LineGraph data={purchasesHQData} />
-					</CardText>
-				</CardBody>
-			</Card>
-		</Col>
-	</Row>
+	<!--
+	<Card>
+		<CardHeader>
+			<CardTitle>NQ Purchase History</CardTitle>
+		</CardHeader>
+		<CardBody>
+			<CardText class="text-center">
+				<LineGraph data={purchasesDataNQ} />
+			</CardText>
+		</CardBody>
+	</Card>
+
+	<Card>
+		<CardHeader>
+			<CardTitle>HQ Purchase History</CardTitle>
+		</CardHeader>
+		<CardBody>
+			<CardText class="text-center">
+				<LineGraph data={purchasesHQData} />
+			</CardText>
+		</CardBody>
+	</Card>
+	-->
 </Container>

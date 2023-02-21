@@ -15,7 +15,7 @@
 
 <nav class="flex items-center justify-between flex-wrap bg-gray-900 p-6 mb-4">
 	<div class="flex items-center flex-shrink-0 text-white mr-6">
-		<span class="font-semibold text-xl tracking-tight">Xivhub Market</span>
+		<span class="font-semibold text-xl tracking-tight"><a href="/">Xivhub Market</a></span>
 	</div>
 	<div class="w-full block flex-grow lg:flex lg:items-center lg:w-auto">
 		<div class="text-sm lg:flex-grow">
@@ -40,9 +40,8 @@
 			The site is currently in live development. You can join our <a href="https://discord.gg/GZK9aME8wN" class="underline">discord</a>
 			or follow us on <a href="https://twitter.com/XivHub" class="underline">twitter</a>!
 		</p>
-		<p class="mb-0">
-			You can help providing data using the dalamud
-			<a href="https://github.com/ZhyraPlugins/MarketUploader" class="underline">plugin</a>
+		<p>
+			You can help providing data by downloading the official dalamud plugin <span class="font-bold">MarketUploader</span> from the plugin manager.
 		</p>
 	</Alert>
 </Container>
