@@ -1,12 +1,17 @@
 <script lang="ts">
 	import { xivApi } from '$lib/api';
 	import StatCard from '$lib/components/StatCard.svelte';
-	import { Card, CardBody, CardHeader, CardText, CardTitle, Col, Container, Row, Table } from 'sveltestrap';
 	import type { PageData } from './$types';
 	import { Bar } from 'svelte-chartjs';
 	import 'chart.js/auto';
 	import 'chartjs-adapter-date-fns';
+	import { Chart } from 'chart.js';
+	Chart.defaults.borderColor = 'rgb(107 114 128)';
+	Chart.defaults.color = 'white';
 	import { formatDistanceToNow } from 'date-fns';
+	import Container from '$lib/components/Container.svelte';
+	import Card from '$lib/components/Card.svelte';
+	import CardHeader from '$lib/components/CardHeader.svelte';
 
 	export let data: PageData;
 
@@ -16,7 +21,9 @@
 			{
 				label: 'Upload Count',
 				data: data.stats.uploads_per_day.map((x) => x.count),
-				borderWidth: 2
+				borderWidth: 2,
+				borderColor: '#0d9488',
+				backgroundColor: '#1f2937'
 			}
 		]
 	};
@@ -27,7 +34,9 @@
 			{
 				label: 'Purchases by Day',
 				data: data.stats.purchase_by_day.map((x) => x.count),
-				borderWidth: 2
+				borderWidth: 2,
+				borderColor: '#0d9488',
+				backgroundColor: '#1f2937'
 			}
 		]
 	};
@@ -38,110 +47,106 @@
 </svelte:head>
 
 <Container>
-	<Row class="gap-2">
-		<Col>
+	<div class="flex gap-2 my-2">
+		<div class="flex-1">
 			<StatCard title="Uploads" data={data.stats.total_uploads} />
-		</Col>
-		<Col>
+		</div>
+		<div class="flex-1">
 			<StatCard title="Purchases" data={data.stats.total_purchases} />
-		</Col>
-		<Col>
+		</div>
+		<div class="flex-1">
 			<StatCard title="Listings" data={data.stats.active_listings} />
-		</Col>
-		<Col>
+		</div>
+		<div class="flex-1">
 			<StatCard title="Items" data={data.stats.unique_items} />
-		</Col>
-		<Col>
+		</div>
+		<div class="flex-1">
 			<StatCard title="Uploaders" data={data.stats.unique_uploaders} />
-		</Col>
-	</Row>
+		</div>
+	</div>
 
-	<Row class="gap-2 mt-2">
-		<Col>
-			<Card>
-				<CardBody>
-					<CardText class="text-center">
-						<Bar
-							data={uploadsData}
-							options={{
-								responsive: true,
-								scales: {
-									x: {
-										type: 'time',
-										ticks: {
-											source: 'auto',
-											// Disabled rotation for performance
-											maxRotation: 0,
-											autoSkip: true
-										},
-										time: {
-											unit: 'day'
-										}
-									}
+	<div class="flex gap-2 my-2">
+		<div class="flex-1 text-center">
+			<Card class="p-2">
+				<Bar
+					data={uploadsData}
+					options={{
+						responsive: true,
+						scales: {
+							x: {
+								type: 'time',
+								ticks: {
+									source: 'auto',
+									// Disabled rotation for performance
+									maxRotation: 0,
+									autoSkip: true
+								},
+								time: {
+									unit: 'day'
 								}
-							}}
-						/>
-					</CardText>
-				</CardBody>
+							}
+						}
+					}}
+				/>
 			</Card>
-		</Col>
-		<Col>
-			<Card>
-				<CardBody>
-					<CardText class="text-center">
-						<Bar
-							data={purchasesData}
-							options={{
-								responsive: true,
-								scales: {
-									x: {
-										type: 'time',
-										ticks: {
-											source: 'auto',
-											// Disabled rotation for performance
-											maxRotation: 0,
-											autoSkip: true
-										},
-										time: {
-											unit: 'day'
-										}
-									}
+		</div>
+		<div class="flex-1 text-center">
+			<Card class="p-2">
+				<Bar
+					data={purchasesData}
+					options={{
+						responsive: true,
+						scales: {
+							x: {
+								type: 'time',
+								ticks: {
+									source: 'auto',
+									// Disabled rotation for performance
+									maxRotation: 0,
+									autoSkip: true
+								},
+								time: {
+									unit: 'day'
 								}
-							}}
-						/>
-					</CardText>
-				</CardBody>
+							}
+						}
+					}}
+				/>
 			</Card>
-		</Col>
-	</Row>
+		</div>
+	</div>
 
-	<Card class="mt-3">
-		<CardHeader><CardTitle>Latest Uploads</CardTitle></CardHeader>
-		<CardBody>
-			<CardText>
-				<Table hover striped bordered responsive>
-					<thead>
+	<Card>
+		<CardHeader><div class="text-center font-bold text-3xl">Latest Uploads</div></CardHeader>
+		<div class="px-6 py-2 flex justify-center">
+			<div class="overflow-y-auto" style="height: 500px;">
+				<table class="table-fixed border-collapse rounded-lg shadow w-full text-center border border-gray-800">
+					<thead class="bg-gray-900 top-0 sticky">
 						<tr>
-							<th>Image</th>
-							<th>Item</th>
-							<th>World</th>
-							<th>When</th>
-							<th>Upload Type</th>
+							<th class="px-4 py-2">Icon</th>
+							<th class="px-4 py-2">Item</th>
+							<th class="px-4 py-2">World</th>
+							<th class="px-4 py-2">When</th>
+							<th class="px-4 py-2">Upload Type</th>
 						</tr>
 					</thead>
-					<tbody>
+					<tbody class="bg-gray-800 border border-gray-800">
 						{#each data.last_uploads as upload}
-							<tr>
-								<td><img alt={`${upload.item_id} Icon`} src={xivApi.apiBase(upload.icon)} /></td>
-								<td><a class="text-decoration-none fw-bold " href={`/item/${upload.item_id}`}>{upload.name}</a></td>
-								<td>{xivApi.getServer(upload.world_id).name}</td>
-								<td>{formatDistanceToNow(new Date(upload.upload_time))} ago</td>
-								<td>{upload.upload_type == 0 ? 'Listings' : 'Purchases'}</td>
+							<tr class="even:bg-gray-700">
+								<td class="px-4 py-2 flex align-middle justify-center"
+									><img alt={`${upload.item_id} Icon`} src={xivApi.apiBase(upload.icon)} /></td
+								>
+								<td class="px-4 py-2"
+									><a class="font-bold text-teal-400 hover:underline" href={`/item/${upload.item_id}`}>{upload.name}</a></td
+								>
+								<td class="px-4 py-2">{xivApi.getServer(upload.world_id).name}</td>
+								<td class="px-4 py-2">{formatDistanceToNow(new Date(upload.upload_time))} ago</td>
+								<td class="px-4 py-2">{upload.upload_type == 0 ? 'Listings' : 'Purchases'}</td>
 							</tr>
 						{/each}
 					</tbody>
-				</Table>
-			</CardText>
-		</CardBody>
+				</table>
+			</div>
+		</div>
 	</Card>
 </Container>
