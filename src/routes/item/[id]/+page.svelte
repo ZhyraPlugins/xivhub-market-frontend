@@ -236,7 +236,7 @@
 				borderWidth: 2,
 				fill: 'origin',
 				borderColor: '#0d9488',
-				backgroundColor: '#1f2937'
+				backgroundColor: '#2c3542'
 			}
 		]
 	};
@@ -251,7 +251,7 @@
 				borderWidth: 2,
 				fill: 'origin',
 				borderColor: '#0d9488',
-				backgroundColor: '#1f2937'
+				backgroundColor: '#2c3542'
 			}
 		]
 	};

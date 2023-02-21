@@ -23,7 +23,7 @@
 				data: data.stats.uploads_per_day.map((x) => x.count),
 				borderWidth: 2,
 				borderColor: '#0d9488',
-				backgroundColor: '#1f2937'
+				backgroundColor: '#2c3542'
 			}
 		]
 	};
@@ -36,7 +36,7 @@
 				data: data.stats.purchase_by_day.map((x) => x.count),
 				borderWidth: 2,
 				borderColor: '#0d9488',
-				backgroundColor: '#1f2937'
+				backgroundColor: '#2c3542'
 			}
 		]
 	};
