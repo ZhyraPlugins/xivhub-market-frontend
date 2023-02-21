@@ -49,7 +49,7 @@
 							<td class="px-2 py-2 text-end font-bold {diffMedian < 0 ? 'text-green-400' : 'text-rose-400'}">{diffMedian.toFixed(2)}%</td>
 							<td class="px-2 py-2 font-bold text-end text-teal-400">{numberWithCommas(listing.price_per_unit)}</td>
 							<td class="px-2 py-2 font-bold text-end text-teal-400">{listing.quantity}</td>
-							<td class="px-2 py-2 font-bold text-end">{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
+							<td class="px-2 py-2 font-bold text-end underline">{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
 							{#if item_info.materia_slot_count > 0}
 								<td class="px-2 py-2 font-bold text-end ">{listing.materia_count}</td>
 							{/if}
