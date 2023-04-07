@@ -2,7 +2,7 @@
 	import { xivApi, type Listing, type Purchase, type XivItemInfo } from '$lib/api';
 	import { numberWithCommas } from '$lib/util';
 	import type { PageData } from './$types';
-	import { formatDistanceToNowStrict } from 'date-fns';
+	import { format, formatDistanceToNowStrict, toDate } from 'date-fns';
 	import LineGraph from '$lib/LineGraph.svelte';
 	import ListingTable from '$lib/components/ListingTable.svelte';
 	import { DataCenters } from '$lib/datacenters';
@@ -13,6 +13,9 @@
 	import Container from '$lib/components/Container.svelte';
 	import Card from '$lib/components/Card.svelte';
 	import CardHeader from '$lib/components/CardHeader.svelte';
+	import { Chart, LineSeries, CandlestickSeries, HistogramSeries, PriceScale } from 'svelte-lightweight-charts';
+	import { ColorType, PriceScaleMode } from 'lightweight-charts';
+	import ChartAdapter from '$lib/components/ChartAdapter.svelte';
 
 	export let data: PageData;
 	export let item: XivItemInfo = data.listings.item;
@@ -303,7 +306,7 @@
 				{@const lastUploadDate = lastUpdatedDatacenter.get(parseInt(datacenterIdStr)) ?? 'unknown'}
 				<li id={datacenterIdStr} class="flex-1">
 					<button
-						class="text-center block border border-gray-500 rounded-md hover:border-teal-400 text-teal-500 
+						class="text-center block border border-gray-500 rounded-md hover:border-teal-400 text-teal-500
 							hover:bg-gray-800 py-1 px-2 w-full h-full
 						 {selectedDatacenter == datacenterId ? 'bg-gray-800' : ''}"
 						on:click={() => {
@@ -332,7 +335,7 @@
 			<ul class="flex px-4 py-2 gap-2 flex-wrap">
 				<li class="flex-1">
 					<button
-						class="text-center block border border-gray-500 rounded-md hover:border-teal-400 text-teal-500 
+						class="text-center block border border-gray-500 rounded-md hover:border-teal-400 text-teal-500
 							hover:bg-gray-800 py-1 px-2 w-full h-full
 						 {selectedWorld == -1 ? 'bg-gray-800' : ''}"
 						on:click={() => {
@@ -354,7 +357,7 @@
 					{@const lastUploadDate = lastUpdated.get(worldName)}
 					<li class="flex-1">
 						<button
-							class="text-center block border border-gray-500 rounded-md hover:border-teal-400 text-teal-500 
+							class="text-center block border border-gray-500 rounded-md hover:border-teal-400 text-teal-500
 								 hover:bg-gray-800 py-1 px-2 w-full h-full
 						 			{selectedWorld == i ? 'bg-gray-800' : ''}"
 							on:click={() => {
@@ -412,27 +415,6 @@
 	<div class="flex flex-row gap-2 flex-1 flex-wrap">
 		<div class="flex flex-col gap-2 flex-1">
 			{#if listingsHQ.length > 0}
-				<StatsTable
-					title="HQ Listing Stats"
-					values={[
-						{
-							type: 'Price per unit',
-							mean: averageListingsHQPrice,
-							median: medianListingHQPrice,
-							mode: modeListingHQPrice,
-							stddev: standardDeviation(listingsHQPrices),
-							mad: medianAbsoluteDeviation(listingsHQPrices)
-						},
-						{
-							type: 'Quantity',
-							mean: meanListingsHQQuantity,
-							median: medianListingHQQuantity,
-							mode: modeListingHQQuantity,
-							stddev: standardDeviation(listingsHQQuantities),
-							mad: medianAbsoluteDeviation(listingsHQQuantities)
-						}
-					]} />
-
 				<ListingTable
 					title="HQ Listings"
 					listings={listingsHQ}
@@ -440,11 +422,17 @@
 					mean={averagePurchaseHQPrice}
 					median={medianPurchaseHQPrice}
 					item_info={item} />
-			{:else}
-				<!--	<p>There are no HQ Listings.</p>-->
 			{/if}
 
 			{#if listingsNQ.length > 0}
+				<ListingTable
+					title="NQ Listings"
+					item_info={item}
+					listings={listingsNQ}
+					withServer={selectedWorldId == -1}
+					mean={averagePurchaseNQPrice}
+					median={medianPurchaseNQPrice} />
+
 				<StatsTable
 					title="NQ Listing Stats"
 					values={[
@@ -465,20 +453,35 @@
 							mad: medianAbsoluteDeviation(listingsNQQuantities)
 						}
 					]} />
-
-				<ListingTable
-					title="NQ Listings"
-					item_info={item}
-					listings={listingsNQ}
-					withServer={selectedWorldId == -1}
-					mean={averagePurchaseNQPrice}
-					median={medianPurchaseNQPrice} />
-			{:else}
-				<p>There are no NQ Listings.</p>
 			{/if}
+
+			{#if listingsHQ.length > 0}
+				<StatsTable
+					title="HQ Listing Stats"
+					values={[
+						{
+							type: 'Price per unit',
+							mean: averageListingsHQPrice,
+							median: medianListingHQPrice,
+							mode: modeListingHQPrice,
+							stddev: standardDeviation(listingsHQPrices),
+							mad: medianAbsoluteDeviation(listingsHQPrices)
+						},
+						{
+							type: 'Quantity',
+							mean: meanListingsHQQuantity,
+							median: medianListingHQQuantity,
+							mode: modeListingHQQuantity,
+							stddev: standardDeviation(listingsHQQuantities),
+							mad: medianAbsoluteDeviation(listingsHQQuantities)
+						}
+					]} />
+			{:else}{/if}
 		</div>
 
 		<div class="flex flex-col gap-2 flex-1">
+			<PurchasesTable title="Purchases" {purchases} withServer={selectedWorldId == -1} />
+
 			<StatsTable
 				title="Purchases Stats"
 				values={[
@@ -519,37 +522,35 @@
 						hidden: purchasesNQ.length == 0
 					}
 				]} />
-
-			<PurchasesTable title="Purchases" {purchases} withServer={selectedWorldId == -1} />
 		</div>
 	</div>
 
-	<div class="flex flex-row w-full gap-2">
-		<div class="flex-1"><LineGraph data={purchasesDataNQ} /></div>
-		<div class="flex-1"><LineGraph data={purchasesHQData} /></div>
-	</div>
-
-	<!--
 	<Card>
 		<CardHeader>
-			<CardTitle>NQ Purchase History</CardTitle>
+			<div class="font-bold text-xl">Average price per day + volume sold</div>
 		</CardHeader>
-		<CardBody>
-			<CardText class="text-center">
-				<LineGraph data={purchasesDataNQ} />
-			</CardText>
-		</CardBody>
+		<ChartAdapter>
+			<HistogramSeries
+				priceScaleId="left"
+				color="#2c4a5c"
+				data={data.purchases_by_day.days.map((x) => ({
+					time: format(new Date(x.time), 'yyyy-MM-dd'),
+					value: x.quantity
+				}))} />
+			<LineSeries
+				priceScaleId="right"
+				data={data.purchases_by_day.days.map((x) => ({
+					time: format(new Date(x.time), 'yyyy-MM-dd'),
+					value: x.average
+				}))} />
+		</ChartAdapter>
 	</Card>
-
-	<Card>
-		<CardHeader>
-			<CardTitle>HQ Purchase History</CardTitle>
-		</CardHeader>
-		<CardBody>
-			<CardText class="text-center">
-				<LineGraph data={purchasesHQData} />
-			</CardText>
-		</CardBody>
-	</Card>
-	-->
 </Container>
+
+<style>
+	:global(.chart-container) {
+		aspect-ratio: 3 / 1;
+		width: 100%;
+		margin: auto;
+	}
+</style>

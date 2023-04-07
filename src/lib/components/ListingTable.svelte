@@ -16,7 +16,7 @@
 <Card class="border border-gray-900">
 	<CardHeader><div class="text-center font-bold text-2xl">{title}</div></CardHeader>
 	<div class="flex">
-		<div class="overflow-y-auto w-full" style="max-height: 500px;">
+		<div class="overflow-y-auto w-full" style="max-height: 300px;">
 			<table class="table-auto border-collapse rounded-lg shadow w-full text-center border border-gray-800">
 				<thead class="bg-gray-900 top-0 sticky">
 					<tr>
@@ -51,7 +51,7 @@
 							<td class="px-2 py-2 font-bold text-end text-teal-400">{listing.quantity}</td>
 							<td class="px-2 py-2 font-bold text-end underline">{numberWithCommas(listing.quantity * listing.price_per_unit)}</td>
 							{#if item_info.materia_slot_count > 0}
-								<td class="px-2 py-2 font-bold text-end ">{listing.materia_count}</td>
+								<td class="px-2 py-2 font-bold text-end">{listing.materia_count}</td>
 							{/if}
 							<td class="px-2 py-2 text-end">{formatDistanceToNowStrict(new Date(listing.last_review_time))} ago</td>
 						</tr>

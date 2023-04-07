@@ -110,6 +110,18 @@ export interface WorldUpload {
 	upload_time: string;
 }
 
+export interface DayPurchases {
+	high: number;
+	low: number;
+	average: number;
+	quantity: number;
+	time: string;
+}
+export interface PurchasesByDayResponse {
+	days: DayPurchases[];
+	item: XivItemInfo;
+}
+
 export class HubApi {
 	getUrl(path: string) {
 		return `${PUBLIC_MARKET_API}${path}`;
@@ -129,6 +141,12 @@ export class HubApi {
 
 	async purchases(fetch: Fetch, item_id: number, page?: number): Promise<PurchasesResponse> {
 		const res = await fetch(this.getUrl(`/item/${item_id}/purchases?page=${page ?? 0}`));
+
+		return await res.json();
+	}
+
+	async purchases_by_day(fetch: Fetch, item_id: number): Promise<PurchasesByDayResponse> {
+		const res = await fetch(this.getUrl(`/item/${item_id}/purchases_by_day`));
 
 		return await res.json();
 	}

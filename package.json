@@ -42,9 +42,11 @@
 		"chart.js": "^4.2.1",
 		"chartjs-adapter-date-fns": "^3.0.0",
 		"date-fns": "^2.29.3",
+		"lightweight-charts": "^4.0.1",
 		"numerable": "^0.3.15",
 		"query-string": "^8.1.0",
 		"simple-statistics": "^7.8.3",
-		"svelte-chartjs": "^3.1.2"
+		"svelte-chartjs": "^3.1.2",
+		"svelte-lightweight-charts": "^2.1.0"
 	}
 }
