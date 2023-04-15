@@ -526,6 +526,7 @@
 	</div>
 
 	<Card>
+		<!-- todo: chart depending on the selected world, and request data -->
 		<CardHeader>
 			<div class="font-bold text-xl">Average price per day + volume sold</div>
 		</CardHeader>
