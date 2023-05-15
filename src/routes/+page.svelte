@@ -134,7 +134,8 @@
 									><img alt={`${upload.item_id} Icon`} src={xivApi.apiBase(upload.icon)} /></td>
 								<td class="px-4 py-2"
 									><a class="font-bold text-teal-400 hover:underline" href={`/item/${upload.item_id}`}>{upload.name}</a></td>
-								<td class="px-4 py-2">{xivApi.getServer(upload.world_id).name}</td>
+								<td class="px-4 py-2"
+									>{xivApi.getServer(upload.world_id) ? xivApi.getServer(upload.world_id).name : `Unknown id = ${upload.world_id}`}</td>
 								<td class="px-4 py-2" title={new Date(upload.upload_time).toLocaleString()}
 									>{formatDistanceToNow(new Date(upload.upload_time))} ago</td>
 							</tr>
