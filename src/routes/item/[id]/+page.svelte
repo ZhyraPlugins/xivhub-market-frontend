@@ -3,19 +3,18 @@
 	import { numberWithCommas } from '$lib/util';
 	import type { PageData } from './$types';
 	import { format, formatDistanceToNowStrict, toDate } from 'date-fns';
-	import LineGraph from '$lib/LineGraph.svelte';
 	import ListingTable from '$lib/components/ListingTable.svelte';
 	import { DataCenters } from '$lib/datacenters';
 	import PurchasesTable from '$lib/components/PurchasesTable.svelte';
 	import { onMount } from 'svelte';
-	import { median, medianAbsoluteDeviation, mode, sampleSkewness, standardDeviation, variance } from 'simple-statistics';
+	import { median, medianAbsoluteDeviation, mode, standardDeviation } from 'simple-statistics';
 	import StatsTable from '$lib/components/StatsTable.svelte';
 	import Container from '$lib/components/Container.svelte';
 	import Card from '$lib/components/Card.svelte';
 	import CardHeader from '$lib/components/CardHeader.svelte';
-	import { Chart, LineSeries, CandlestickSeries, HistogramSeries, PriceScale } from 'svelte-lightweight-charts';
-	import { ColorType, PriceScaleMode } from 'lightweight-charts';
+	import { LineSeries, HistogramSeries } from 'svelte-lightweight-charts';
 	import ChartAdapter from '$lib/components/ChartAdapter.svelte';
+	import Button from '$lib/components/Button.svelte';
 
 	export let data: PageData;
 	export let item: XivItemInfo = data.listings.item;
@@ -42,6 +41,7 @@
 	// Put the listings inside each datacenter, world
 	for (let listing of data.listings.listings) {
 		const world = xivApi.getServer(listing.world_id);
+		if (!world) continue;
 		let worlds = listingsServers.get(world.datacenter);
 
 		if (!worlds) {
@@ -228,37 +228,6 @@
 	$: modePurchaseNQQuantity = purchasesNQ.length > 0 ? mode(purchasesNQQuantities) : NaN;
 	$: modePurchaseHQQuantity = purchasesHQ.length > 0 ? mode(purchasesHQQuantities) : NaN;
 
-	// Plotting data
-	$: reversedPurchasesNQ = purchasesNQ.slice(0).reverse();
-	$: purchasesDataNQ = {
-		labels: reversedPurchasesNQ.map((x) => new Date(x.purchase_time)),
-		datasets: [
-			{
-				label: 'Price per unit NQ',
-				data: reversedPurchasesNQ.map((x) => x.price_per_unit),
-				borderWidth: 2,
-				fill: 'origin',
-				borderColor: '#0d9488',
-				backgroundColor: '#2c3542'
-			}
-		]
-	};
-
-	$: reversedPurchasesHQ = purchasesHQ.slice(0).reverse();
-	$: purchasesHQData = {
-		labels: reversedPurchasesHQ.map((x) => new Date(x.purchase_time)),
-		datasets: [
-			{
-				label: 'Price per unit HQ',
-				data: reversedPurchasesHQ.map((x) => x.price_per_unit),
-				borderWidth: 2,
-				fill: 'origin',
-				borderColor: '#0d9488',
-				backgroundColor: '#2c3542'
-			}
-		]
-	};
-
 	$: lastDatacenterUploadDate = lastUpdatedDatacenter.get(selectedDatacenter);
 </script>
 
@@ -293,6 +262,10 @@
 					<li>Equip level: {item.level_equip}</li>
 					<li>Can be HQ: {item.can_be_hq.toString()}</li>
 					<li>Rarity: {item.rarity}</li>
+				</ul>
+				<ul class="mt-1">
+					<Button target_ext href={`https://www.garlandtools.org/db/#item/${item.item_id}`}>GarlandTools</Button>
+					<Button target_ext href={`https://ffxivteamcraft.com/db/en/item/${item.item_id}`}>Teamcraft</Button>
 				</ul>
 			</div>
 		</div>
@@ -476,7 +449,7 @@
 							mad: medianAbsoluteDeviation(listingsHQQuantities)
 						}
 					]} />
-			{:else}{/if}
+			{/if}
 		</div>
 
 		<div class="flex flex-col gap-2 flex-1">
@@ -487,9 +460,9 @@
 				values={[
 					{
 						type: 'Price per unit (HQ)',
-						mean: averagePurchaseNQPrice,
-						median: medianPurchaseNQPrice,
-						mode: modePurchaseNQPrice,
+						mean: averagePurchaseHQPrice,
+						median: medianPurchaseHQPrice,
+						mode: modePurchaseHQPrice,
 						stddev: purchasesHQ.length > 0 ? standardDeviation(purchasesHQPrices) : NaN,
 						mad: purchasesHQ.length > 0 ? medianAbsoluteDeviation(purchasesHQPrices) : NaN,
 						hidden: purchasesHQ.length == 0
